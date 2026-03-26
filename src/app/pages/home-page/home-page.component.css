@@ -1,0 +1,17 @@
+.cardBg {
+  font-family: "Montserrat", sans-serif;
+}
+
+.goodStatus {
+  background-color: #22C55E;
+}
+.badStatus {
+  background-color: #EF4444;
+}
+.normalStatus {
+  background-color: #F59E0B;
+}
+
+.newTransactionButton {
+  top: calc(100vh - 80px);
+}

@@ -1,0 +1,29 @@
+<p class="flex items-center gap-2 font-bold"><mat-icon class="-mt-1">query_stats</mat-icon>Statistics:</p>
+
+<div class="w-full flex gap-2 my-10">
+  <div class="w-4/12 flex items-center justify-center rounded-2xl bg-blue-300">
+    <p class="py-1 text-white">Savings</p>
+  </div>
+  <div class="w-4/12 flex items-center justify-center border rounded-2xl">
+    <p class="py-1">Expenses</p>
+  </div>
+  <div class="w-4/12 flex items-center justify-center border rounded-2xl">
+    <p class="py-1">Limits</p>
+  </div>
+</div>
+
+<p class="hidden mutedText">Monthly savings rate:</p>
+<div class="my-4 hidden">
+  <canvas id="myChart"></canvas>
+</div>
+
+
+<div class="w-full m-auto px-10">
+  <canvas
+    baseChart
+    [data]="doughnutChartData"
+    [options]="doughnutChartOptions"
+    type="doughnut"
+  >
+  </canvas>
+</div>

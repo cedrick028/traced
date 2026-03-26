@@ -1,0 +1,43 @@
+::ng-deep .mat-paginator-range-label {
+  font-size: 14px !important;
+  margin: 0 16px !important;
+}
+::ng-deep .mat-paginator-icon {
+  width: 24px !important;
+}
+
+::ng-deep .mat-icon-button {
+  width: 30px !important;
+  height: 36px !important;
+}
+
+::ng-deep td.mat-cell:first-of-type, th.mat-header-cell:first-of-type {
+  padding-left: 4px !important;
+}
+::ng-deep  td.mat-cell:last-of-type {
+  padding-right: 4px !important;
+}
+
+::ng-deep .mat-form-field-appearance-legacy .mat-form-field-wrapper {
+  padding-bottom: unset !important;
+}
+::ng-deep .mat-form-field-label-wrapper {
+  padding-top: unset !important;
+}
+::ng-deep .mat-form-field-infix {
+  border-top: unset !important;
+  width: 340px !important;
+}
+::ng-deep .mat-form-field-label-wrapper {
+  top: unset !important;
+}
+::ng-deep .mat-form-field-appearance-legacy .mat-form-field-underline {
+  display: none;
+}
+::ng-deep input.mat-input-element {
+  padding: 0 4px;
+}
+
+::ng-deep .mat-form-field-appearance-legacy .mat-form-field-infix {
+  padding: .6em 0 !important;
+}

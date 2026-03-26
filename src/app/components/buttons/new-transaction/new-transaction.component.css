@@ -1,0 +1,4 @@
+:host ::ng-deep .mat-form-field-infix {
+  border-top: unset !important;
+  width: 270px !important;
+}

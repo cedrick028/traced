@@ -1,0 +1,45 @@
+<div>
+  <div *ngIf="vars.displayTableFilter" class="flex items-center gap-1 my-4">
+    <mat-form-field class="border rounded-md overflow-hidden">
+      <input matInput (keyup)="applyFilter($event)" #input />
+    </mat-form-field>
+    <mat-icon class="icons">search</mat-icon>
+  </div>
+
+  <div class="mt-4">
+    <table mat-table [dataSource]="dataSource" matSort class="w-full">
+
+      <ng-container *ngFor="let col of displayedColumns" [matColumnDef]="col">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> {{col === 'created_at' ? 'Date' : col.charAt(0).toUpperCase() + col.slice(1)}} </th>
+        <td mat-cell *matCellDef="let row">
+          <div *ngIf="col === 'category'" class="min-w-16 px-2 py-0.5 rounded-md border border-r-8"
+              [ngClass]="row[col].toLowerCase() === 'grocery' ? 'border-r-green-300'
+                        : row[col].toLowerCase() === 'transportation' ? 'border-r-purple-300'
+                        : row[col].toLowerCase() === 'restaurant' ? 'border-r-pink-300'
+                        : row[col].toLowerCase() === 'shopping' ? 'border-r-blue-300'
+                        : row[col].toLowerCase() === 'telco' ? 'border-r-teal-300'
+                        : 'border-r-gray-300'">
+            <p class="text-center text-sm">{{row[col]}}</p>
+          </div>
+
+          <div *ngIf="col === 'price'">
+            <p class="text-sm">{{row[col] | currency:'AED '}}</p>
+          </div>
+
+          <div *ngIf="col === 'created_at'">
+            <p class="text-sm">{{row[col] | date:'MM-dd '}}</p>
+          </div>
+
+          <div *ngIf="col !== 'category' && col !== 'price' && col !== 'created_at'" class="max-w-28">
+            <p class="text-sm truncate">{{row[col]}}</p>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+    <mat-paginator [pageSizeOptions]="vars.displayTableFilter ? [20] : [5]" hidePageSize></mat-paginator>
+  </div>
+</div>
