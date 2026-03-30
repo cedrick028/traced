@@ -27,7 +27,6 @@ export class AppComponent {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        // Home summary is updated via SupabaseService.transactions$ subscription.
         this.vars.transactionDatasource.data = [...this.vars.transactionDatasource.data, result];
       }
     })

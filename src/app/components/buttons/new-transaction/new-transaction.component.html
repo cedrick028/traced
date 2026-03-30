@@ -3,21 +3,21 @@
 
   <div>
     <p class="text-sm mutedText">Product name:</p>
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" class="!max-w-fit">
       <input matInput [(ngModel)]="productName">
     </mat-form-field>
   </div>
 
   <div class="">
     <p class="text-sm mutedText">Price:</p>
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" class="!max-w-fit">
       <input matInput [(ngModel)]="productPrice">
     </mat-form-field>
   </div>
 
   <div>
     <p class="text-sm mutedText">Category:</p>
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" class="!max-w-fit">
       <mat-select [(ngModel)]="productCategory">
         <mat-option value="grocery">Grocery</mat-option>
         <mat-option value="transportation">Transportation</mat-option>

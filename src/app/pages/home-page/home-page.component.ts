@@ -66,10 +66,14 @@ export class HomePageComponent implements OnInit, OnDestroy {
 
   calculateExpenses(transactions: any[]) {
     const map = new Map<string, number>();
+    const countMap = new Map<string, number>();
 
     for (const t of transactions) {
-      const cat = t.category.toLowerCase();
+      const cat = t.category.trim().toLowerCase();
       map.set(cat, (map.get(cat) || 0) + t.price);
+
+      // new count logic
+      countMap.set(cat, (countMap.get(cat) || 0) + 1);
     }
 
     this.categoryList = this.categoryList.map((c: any) => ({
@@ -80,6 +84,33 @@ export class HomePageComponent implements OnInit, OnDestroy {
     this.grandTotal = this.categoryList.reduce((sum: number, c: any) => {
       return sum + (c.expense || 0);
     }, 0);
+
+    const totalCount = transactions.length;
+
+    // Step 2: update category list with BOTH values
+    this.categoryList = this.categoryList.map((c: any) => {
+    const key = c.category.trim().toLowerCase();
+    const expense = map.get(key) || 0;
+    const count = countMap.get(key) || 0;
+
+    return {
+      ...c,
+      expense: expense,
+      count: count,
+
+      // ✅ count-based %
+      percentage: totalCount > 0
+        ? ((count / totalCount) * 100).toFixed(2)
+        : 0,
+
+      // ✅ expense-based %
+      expensePercentage: this.grandTotal > 0
+        ? ((expense / this.grandTotal) * 100).toFixed(2)
+        : 0
+      };
+    });
+
+    this.vars.categoryPercentage = this.categoryList;
   }
 
 }

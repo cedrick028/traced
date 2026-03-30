@@ -1,23 +1,14 @@
 <p class="flex items-center gap-2 font-bold"><mat-icon>receipt</mat-icon>Transactions:</p>
 <p class="mt-8 mb-2 mutedText">Summary graph:</p>
-<div class="w-full flex mb-8">
-  <div class="w-4/12 h-4 flex items-center pl-2 bg-green-300 rounded-l-md">
-    <p class="text-xs text-white">30%</p>
-  </div>
-  <div class="w-2/12 h-4 flex items-center pl-2 bg-purple-300">
-    <p class="text-xs text-white">20%</p>
-  </div>
-  <div class="w-2/12 h-4 flex items-center pl-2 bg-pink-300">
-    <p class="text-xs text-white">20%</p>
-  </div>
-  <div class="w-2/12 h-4 flex items-center pl-2 bg-blue-300">
-    <p class="text-xs text-white">20%</p>
-  </div>
-  <div class="w-1/12 h-4 flex items-center pl-2 bg-teal-300">
-    <p class="text-xs text-white">5%</p>
-  </div>
-  <div class="w-1/12 h-4 flex items-center pl-2 bg-gray-300 rounded-r-md">
-    <p class="text-xs text-white">5%</p>
+<div class="w-full flex gap-1 mb-8">
+  <div *ngFor="let category of vars.categoryPercentage" [ngStyle]="{'width': category.percentage + '%'}" class="h-4 flex items-center pl-2 rounded-md"
+        [ngClass]="category.category.toLowerCase() === 'grocery' ? 'bg-green-300'
+                  : category.category.toLowerCase() === 'transportation' ? 'bg-purple-300'
+                  : category.category.toLowerCase() === 'restaurant' ? 'bg-pink-300'
+                  : category.category.toLowerCase() === 'shopping' ? 'bg-blue-300'
+                  : category.category.toLowerCase() === 'telco' ? 'bg-teal-300'
+                  : 'bg-gray-300'">
+    <p class="text-xs text-white">{{category.percentage/100 | percent}}</p>
   </div>
 </div>
 

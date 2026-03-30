@@ -22,10 +22,11 @@ export class NewTransactionComponent implements OnInit {
   }
 
   async addNewTransaction() {
-    const newTransaction: Transaction = {
+    const newTransaction: any = {
       product: this.productName,
       price: this.productPrice,
-      category: this.productCategory
+      category: this.productCategory,
+      created_at: new Date().toISOString()
     }
 
     if (this.productPrice && this.productCategory) {

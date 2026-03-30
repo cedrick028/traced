@@ -12,6 +12,13 @@ export class SupabaseService {
 
   constructor() { }
 
+  // Ensure transactions are loaded (load only if not already loaded)
+  async ensureTransactionsLoaded() {
+    if (this.transactionsSubject.value.length === 0) {
+      await this.loadTransactions();
+    }
+  }
+
   // Load transactions dynamically and update the subject
   async loadTransactions() {
     const data = await this.getAll('transactions');
@@ -33,12 +40,13 @@ export class SupabaseService {
   async insert(table: string, payload: any): Promise<Transaction> {
     const { data, error } = await supabase
       .from(table)
-      .insert([payload]);
+      .insert([payload])
+      .select();
 
     if (error) throw error;
 
     // Update the transactions subject if adding to transactions table
-    if (table === 'transactions') {
+    if (table === 'transactions' && data && data.length > 0) {
       const current = this.transactionsSubject.value;
       this.transactionsSubject.next([...current, data[0]]);
     }

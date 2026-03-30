@@ -28,7 +28,7 @@
                         : row[col].toLowerCase() === 'shopping' ? 'border-r-blue-300'
                         : row[col].toLowerCase() === 'telco' ? 'border-r-teal-300'
                         : 'border-r-gray-300'">
-            <p class="text-center text-sm">{{row[col]}}</p>
+            <p class="text-center text-sm">{{row[col].charAt(0).toUpperCase() + row[col].slice(1)}}</p>
           </div>
 
           <div *ngIf="col === 'price'">
