@@ -18,6 +18,7 @@ export class NewTransactionComponent implements OnInit {
   constructor(private supabaseService: SupabaseService, private vars: VarsService, private dialogRef: MatDialogRef<NewTransactionComponent>) { }
 
   ngOnInit(): void {
+
   }
 
   async addNewTransaction() {
@@ -27,9 +28,10 @@ export class NewTransactionComponent implements OnInit {
       category: this.productCategory
     }
 
-    const holdTransaction = await this.supabaseService.insert('transactions', newTransaction);
-
-    this.dialogRef.close(holdTransaction);
+    if (this.productPrice && this.productCategory) {
+      const holdTransaction = await this.supabaseService.insert('transactions', newTransaction);
+      this.dialogRef.close(holdTransaction);
+    }
   }
 
 }

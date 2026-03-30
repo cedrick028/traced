@@ -1,6 +1,8 @@
-<app-savings-card></app-savings-card>
+<mat-spinner *ngIf="!grandTotal" class="mx-auto my-10"></mat-spinner>
+<app-savings-card *ngIf="grandTotal" [savings]="vars.monthlyIncome - grandTotal"></app-savings-card>
 
-<p class="text-sm text-center px-16 mt-4 mutedText">You're on track with your spending and saving. Nice work!</p>
+<p *ngIf="grandTotal" class="text-sm text-center px-16 mt-4 mutedText">You're on track with your spending and saving. Nice work!</p>
+<p *ngIf="!grandTotal" class="text-sm text-center px-16 mt-4 mutedText">Retrieving Data..</p>
 
 <div class="mt-12">
   <p class="flex items-center gap-2 font-bold mb-4"><mat-icon class="-mt-1">payments</mat-icon>Expenses this Month:</p>

@@ -5,6 +5,9 @@
 ::ng-deep .mat-paginator-icon {
   width: 24px !important;
 }
+::ng-deep .mat-paginator-outer-container {
+  border-top-width: 1px;
+}
 
 ::ng-deep .mat-icon-button {
   width: 30px !important;
@@ -17,6 +20,9 @@
 ::ng-deep  td.mat-cell:last-of-type {
   padding-right: 4px !important;
 }
+::ng-deep td.mat-cell {
+  border-bottom-width: 0 !important;
+}
 
 ::ng-deep .mat-form-field-appearance-legacy .mat-form-field-wrapper {
   padding-bottom: unset !important;
@@ -26,7 +32,7 @@
 }
 ::ng-deep .mat-form-field-infix {
   border-top: unset !important;
-  width: 340px !important;
+  /* width: 340px !important; */
 }
 ::ng-deep .mat-form-field-label-wrapper {
   top: unset !important;
@@ -39,5 +45,14 @@
 }
 
 ::ng-deep .mat-form-field-appearance-legacy .mat-form-field-infix {
-  padding: .6em 0 !important;
+  padding: .3em 0 !important;
+}
+
+::ng-deep .mat-progress-spinner svg {
+  width: 40px !important;
+  height: 40px !important;
+}
+::ng-deep .mat-progress-spinner {
+  width: 40px !important;
+  height: 40px !important;
 }

@@ -26,9 +26,10 @@ export class AppComponent {
     const dialogRef = this.dialog.open(NewTransactionComponent);
 
     dialogRef.afterClosed().subscribe(result => {
-      console.log('test',result)
-      this.vars.transactionSummaryDatasource.data = [...this.vars.transactionSummaryDatasource.data, result];
-      this.vars.transactionDatasource.data = [...this.vars.transactionDatasource.data, result];
+      if (result) {
+        this.vars.transactionSummaryDatasource.data = [...this.vars.transactionSummaryDatasource.data, result];
+        this.vars.transactionDatasource.data = [...this.vars.transactionDatasource.data, result];
+      }
     })
   }
 }

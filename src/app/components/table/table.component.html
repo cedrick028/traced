@@ -1,9 +1,18 @@
 <div>
-  <div *ngIf="vars.displayTableFilter" class="flex items-center gap-1 my-4">
-    <mat-form-field class="border rounded-md overflow-hidden">
-      <input matInput (keyup)="applyFilter($event)" #input />
-    </mat-form-field>
-    <mat-icon class="icons">search</mat-icon>
+  <div *ngIf="vars.displayTableFilter" class="flex items-center justify-between my-4">
+    <div class="flex items-center gap-1">
+      <mat-form-field class="border rounded-md overflow-hidden">
+        <input matInput (keyup)="applyFilter($event)" #input />
+      </mat-form-field>
+      <mat-icon class="icons">search</mat-icon>
+    </div>
+
+    <div class="flex items-center gap-1">
+      <div class="flex items-center text-center border px-3 py-1 rounded-md" (click)="filterTodaysTransaction()">
+        <p class="text-sm">Today's Trans.</p>
+      </div>
+      <mat-icon *ngIf="filteredToday" (click)="resetTodaysTransactionFilter()">close</mat-icon>
+    </div>
   </div>
 
   <div class="mt-4">
@@ -38,6 +47,15 @@
 
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
       <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+      <tr class="mat-row" *matNoDataRow>
+        <td class="mat-cell" colspan="4">
+          <div>
+            <mat-spinner *ngIf="vars.transactionSummaryDatasource.data" class="!w-10 !h-10 mx-auto my-5"></mat-spinner>
+            <!-- <img *ngIf="vars.transactionSummaryDatasource.data" src="../../../assets/empty_data.png" /> -->
+          </div>
+        </td>
+      </tr>
     </table>
 
     <mat-paginator [pageSizeOptions]="vars.displayTableFilter ? [20] : [5]" hidePageSize></mat-paginator>

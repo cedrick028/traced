@@ -12,5 +12,9 @@ export class VarsService {
   transactionSummaryDatasource = new MatTableDataSource<Transaction>([])
   transactionDatasource = new MatTableDataSource<Transaction>([])
 
+  todaysDate: Date = new Date();
+
+  monthlyIncome: number = 7000;
+
   constructor() { }
 }

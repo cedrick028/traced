@@ -16,6 +16,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { FormsModule } from '@angular/forms';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatSelectModule } from '@angular/material/select';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { NgChartsModule } from 'ng2-charts';
 
@@ -57,7 +58,8 @@ import { MatButtonModule } from "@angular/material/button";
     NgChartsModule,
     MatDialogModule,
     MatSelectModule,
-    MatButtonModule
+    MatButtonModule,
+    MatProgressSpinnerModule
 ],
   providers: [],
   bootstrap: [AppComponent]

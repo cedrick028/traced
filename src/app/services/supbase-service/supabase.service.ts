@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { supabase } from '../../supabase.client';
 import { Transaction } from 'src/app/interfaces/transaction';
 
@@ -6,8 +7,17 @@ import { Transaction } from 'src/app/interfaces/transaction';
   providedIn: 'root'
 })
 export class SupabaseService {
+  private transactionsSubject = new BehaviorSubject<any[]>([]);
+  transactions$ = this.transactionsSubject.asObservable();
 
   constructor() { }
+
+  // Load transactions dynamically and update the subject
+  async loadTransactions() {
+    const data = await this.getAll('transactions');
+    this.transactionsSubject.next(data);
+    return data;
+  }
 
   // SELECT
   async getAll(table: string) {
@@ -26,6 +36,13 @@ export class SupabaseService {
       .insert([payload]);
 
     if (error) throw error;
+
+    // Update the transactions subject if adding to transactions table
+    if (table === 'transactions') {
+      const current = this.transactionsSubject.value;
+      this.transactionsSubject.next([...current, data[0]]);
+    }
+
     return data[0]; // always return single object
   }
 
