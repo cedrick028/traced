@@ -50,9 +50,9 @@
 
       <tr class="mat-row" *matNoDataRow>
         <td class="mat-cell" colspan="4">
-          <div>
-            <mat-spinner *ngIf="vars.transactionSummaryDatasource.data" class="!w-10 !h-10 mx-auto my-5"></mat-spinner>
-            <!-- <img *ngIf="vars.transactionSummaryDatasource.data" src="../../../assets/empty_data.png" /> -->
+          <div class="flex flex-col items-center justify-center mb-10">
+            <img *ngIf="vars.transactionSummaryDatasource.data" src="../../../assets/empty_data.png" class="w-40" />
+            <p class="text-sm mutedText">No transactions today.</p>
           </div>
         </td>
       </tr>

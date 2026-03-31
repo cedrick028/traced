@@ -98,12 +98,10 @@ export class HomePageComponent implements OnInit, OnDestroy {
       expense: expense,
       count: count,
 
-      // ✅ count-based %
       percentage: totalCount > 0
         ? ((count / totalCount) * 100).toFixed(2)
         : 0,
 
-      // ✅ expense-based %
       expensePercentage: this.grandTotal > 0
         ? ((expense / this.grandTotal) * 100).toFixed(2)
         : 0
