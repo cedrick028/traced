@@ -13,10 +13,10 @@ export class AppComponent {
 
   navLinks: any = [
     {nav: 'Home', routerLink: '/', icon: ''},
-    {nav: 'Statistics', routerLink: '/statistics', icon: ''},
+    // {nav: 'Statistics', routerLink: '/statistics', icon: ''},
     {nav: 'Transactions', routerLink: '/transaction', icon: ''},
     {nav: 'Account', routerLink: '/account', icon: ''},
-    {nav: 'Settings', routerLink: '/settings', icon: ''}
+    // {nav: 'Settings', routerLink: '/settings', icon: ''}
   ]
   displayMenu: boolean = false;
 
