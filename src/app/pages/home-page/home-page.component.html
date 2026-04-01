@@ -5,12 +5,29 @@
 <p *ngIf="!grandTotal" class="text-sm text-center px-16 mt-4 mutedText">Retrieving Data..</p>
 
 <div class="mt-12">
-  <p class="flex items-center gap-2 font-bold mb-4"><mat-icon class="-mt-1">payments</mat-icon>Expenses this Month:</p>
+  <div class="flex items-center justify-between mb-4">
+    <p class="flex items-center gap-2 font-bold"><mat-icon class="-mt-1">payments</mat-icon>Expenses this Month:</p>
+    <p *ngIf="grandTotal === 0" class="text-sm mutedText">Nothing this month.</p>
+  </div>
   <div *ngFor="let category of categoryList" class="flex items-center justify-between my-3">
     <p class="w-3/12 font-bold">{{category.category}}</p>
-    <p class="w-3/12 text-sm">{{category.expense | currency: 'AED '}}</p>
-    <div class="w-16 rounded-md text-center" [ngClass]="category.status.toLowerCase() === 'good' ? 'bg-green-300' : category.status.toLowerCase() === 'bad' ? 'bg-red-300' : 'bg-yellow-300'">
-      <p class="text-white text-sm px-2 py-0.5">{{category.status}}</p>
+    <p class="w-3/12 text-sm">{{category.expense === 0 ? '-' : category.expense | currency: 'AED '}}</p>
+    <div [ngSwitch]="category.category.toLowerCase()">
+      <div class="w-16 rounded-md text-center" *ngSwitchCase="'grocery'" [ngClass]="category.expense <= 1200 ? 'bg-green-300' : category.expense >= 1200 && category.expense <= 2000 ? 'bg-yellow-300' : 'bg-red-300'">
+        <p class="text-white text-sm px-2 py-0.5">{{category.expense <= 1200 ? 'Good' : category.expense >= 1200 && category.expense <= 2000 ? 'Normal' : 'Bad'}}</p>
+      </div>
+      <div class="w-16 rounded-md text-center" *ngSwitchCase="'transportation'" [ngClass]="category.expense <= 100 ? 'bg-green-300' : category.expense >= 100 && category.expense <= 150 ? 'bg-yellow-300' : 'bg-red-300'">
+        <p class="text-white text-sm px-2 py-0.5">{{category.expense <= 100 ? 'Good' : category.expense >= 100 && category.expense <= 150 ? 'Normal' : 'Bad'}}</p>
+      </div>
+      <div class="w-16 rounded-md text-center" *ngSwitchCase="'restaurant'" [ngClass]="category.expense <= 300 ? 'bg-green-300' : category.expense >= 300 && category.expense <= 500 ? 'bg-yellow-300' : 'bg-red-300'">
+        <p class="text-white text-sm px-2 py-0.5">{{category.expense <= 300 ? 'Good' : category.expense >= 300 && category.expense <= 500 ? 'Normal' : 'Bad'}}</p>
+      </div>
+      <div class="w-16 rounded-md text-center" *ngSwitchCase="'shopping'" [ngClass]="category.expense <= 600 ? 'bg-green-300' : category.expense >= 600 && category.expense <= 1000 ? 'bg-yellow-300' : 'bg-red-300'">
+        <p class="text-white text-sm px-2 py-0.5">{{category.expense <= 600 ? 'Good' : category.expense >= 600 && category.expense <= 1000 ? 'Normal' : 'Bad'}}</p>
+      </div>
+      <div class="w-16 rounded-md text-center" *ngSwitchCase="'telco'" [ngClass]="category.expense <= 100 ? 'bg-green-300' : category.expense >= 100 && category.expense <= 150 ? 'bg-yellow-300' : 'bg-red-300'">
+        <p class="text-white text-sm px-2 py-0.5">{{category.expense <= 100 ? 'Good' : category.expense >= 100 && category.expense <= 150 ? 'Normal' : 'Bad'}}</p>
+      </div>
     </div>
   </div>
 </div>

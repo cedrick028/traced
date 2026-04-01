@@ -89,22 +89,22 @@ export class HomePageComponent implements OnInit, OnDestroy {
 
     // Step 2: update category list with BOTH values
     this.categoryList = this.categoryList.map((c: any) => {
-    const key = c.category.trim().toLowerCase();
-    const expense = map.get(key) || 0;
-    const count = countMap.get(key) || 0;
+      const key = c.category.trim().toLowerCase();
+      const expense = map.get(key) || 0;
+      const count = countMap.get(key) || 0;
 
-    return {
-      ...c,
-      expense: expense,
-      count: count,
+      return {
+        ...c,
+        expense: expense,
+        count: count,
 
-      percentage: totalCount > 0
-        ? ((count / totalCount) * 100).toFixed(2)
-        : 0,
+        percentage: totalCount > 0
+          ? ((count / totalCount) * 100).toFixed(2)
+          : 0,
 
-      expensePercentage: this.grandTotal > 0
-        ? ((expense / this.grandTotal) * 100).toFixed(2)
-        : 0
+        expensePercentage: this.grandTotal > 0
+          ? ((expense / this.grandTotal) * 100).toFixed(2)
+          : 0
       };
     });
 
