@@ -8,10 +8,10 @@
     </div>
 
     <div class="flex items-center gap-1">
-      <div class="flex items-center text-center border px-3 py-1 rounded-md" (click)="filterTodaysTransaction()">
+      <div class="flex items-center text-center border px-3 py-1 rounded-md cursor-pointer" (click)="filterTodaysTransaction()">
         <p class="text-sm">Today's Trans.</p>
       </div>
-      <mat-icon *ngIf="filteredToday" (click)="resetTodaysTransactionFilter()">close</mat-icon>
+      <mat-icon *ngIf="filteredToday" (click)="resetTodaysTransactionFilter()" class="cursor-pointer">close</mat-icon>
     </div>
   </div>
 

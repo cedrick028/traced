@@ -35,7 +35,7 @@
 <div class="mt-12">
   <div class="flex items-center justify-between">
     <p class="flex items-center gap-2 font-bold"><mat-icon class="-mt-1">receipt</mat-icon>Today's Transactions:</p>
-    <p class="text-sm mutedText" routerLink="/transaction">View all</p>
+    <p class="text-sm cursor-pointer mutedText" routerLink="/transaction">View all</p>
   </div>
   <app-table [displayedColumns]="['product', 'price', 'category']" [dataSource]="vars.transactionSummaryDatasource"></app-table>
 </div>

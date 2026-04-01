@@ -1,18 +1,18 @@
-<div class="p-6">
+<div class="max-w-[430px] mx-auto p-6">
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-2">
-      <mat-icon *ngIf="!displayMenu" class="-mt-0.5 icons" (click)="displayMenu = !displayMenu">menu</mat-icon>
-      <mat-icon *ngIf="displayMenu" class="-mt-0.5 z-10 icons" (click)="displayMenu = !displayMenu">close</mat-icon>
-      <p class="text-2xl font-bold tracking-wide logo" routerLink="/">TRA<span class="text-2xl font-bold tracking-wide text-gray-300 logo">CED</span></p>
+      <mat-icon *ngIf="!displayMenu" class="-mt-0.5 cursor-pointer icons" (click)="displayMenu = !displayMenu">menu</mat-icon>
+      <mat-icon *ngIf="displayMenu" class="-mt-0.5 z-10 cursor-pointer icons" (click)="displayMenu = !displayMenu">close</mat-icon>
+      <p class="text-2xl font-bold tracking-wide cursor-pointer logo" routerLink="/">TRA<span class="text-2xl font-bold tracking-wide text-gray-300 logo">CED</span></p>
     </div>
-    <div class="flex items-center justify-center gap-1 bg-blue-300 rounded-xl shadow-md px-3 py-2">
+    <div class="flex items-center justify-center gap-1 bg-blue-300 rounded-xl shadow-md px-3 py-2 cursor-pointer">
       <mat-icon class="text-[16px] !w-4 !h-4 text-white -mt-0.5">add</mat-icon>
       <p class="text-sm text-white" (click)="openDialog()">New Transaction</p>
     </div>
   </div>
 
   <div *ngIf="displayMenu" class="absolute top-0 left-0 w-full h-screen flex flex-col items-center gap-4 pt-16 bg-white">
-    <p *ngFor="let nav of navLinks" [routerLink]="nav.routerLink" (click)="displayMenu = !displayMenu">{{nav.nav}}</p>
+    <p *ngFor="let nav of navLinks" [routerLink]="nav.routerLink" (click)="displayMenu = !displayMenu" class="cursor-pointer">{{nav.nav}}</p>
   </div>
 
   <div *ngIf="!displayMenu" class="mt-4">
