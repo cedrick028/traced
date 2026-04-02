@@ -62,7 +62,6 @@ export class TransactionPageComponent implements OnInit, OnDestroy {
     });
 
     this.vars.categoryPercentage = categoryPercentages;
-    console.log(this.vars.categoryPercentage)
   }
 
 }

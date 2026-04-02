@@ -1,0 +1,78 @@
+<!-- <div class="signup-container">
+  <h2>Sign Up</h2>
+
+  <form (ngSubmit)="onSignup()">
+    <div>
+      <label>Email</label>
+      <input
+        type="email"
+        [(ngModel)]="email"
+        name="email"
+        required
+      />
+    </div>
+
+    <div>
+      <label>Password</label>
+      <input
+        type="password"
+        [(ngModel)]="password"
+        name="password"
+        required
+      />
+    </div>
+
+    <button type="submit" [disabled]="loading">
+      {{ loading ? 'Creating account...' : 'Sign Up' }}
+    </button>
+
+    <p *ngIf="errorMessage" style="color:red;">
+      {{ errorMessage }}
+    </p>
+
+    <p>
+      Already have an account?
+      <a [routerLink]="['/login']">Login</a>
+    </p>
+  </form>
+</div> -->
+
+<div class="login-container">
+  <p class="text-sm text-center mt-10 mutedText">Welcome to</p>
+  <p class="text-5xl font-bold text-center text-blue-300 logo">TRA<span class="text-gray-300">CED</span></p>
+  <p class="text-center my-20 mutedText">Create an account</p>
+
+  <form (ngSubmit)="onSignup()">
+    <div class="flex justify-center">
+      <div>
+        <p class="text-sm mutedText">Email</p>
+        <mat-form-field appearance="outline" class="">
+          <input matInput [(ngModel)]="email" name="email" class="!py-1">
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="flex justify-center my-4">
+      <div>
+        <p class="text-sm mutedText">Password</p>
+        <mat-form-field appearance="outline" class="">
+          <input type="password" matInput [(ngModel)]="password" name="password" class="!py-1">
+        </mat-form-field>
+      </div>
+    </div>
+
+    <button type="submit" [disabled]="loading" class="min-w-[240px] flex items-center justify-center gap-1 bg-blue-300 text-white rounded-md shadow-md pl-2 pr-3 py-2 mx-auto my-6"> Sign Up </button>
+
+    <p *ngIf="errorMessage" class="text-red-500 text-sm mt-4 text-center"> {{ errorMessage }} </p>
+  </form>
+
+  <p class="text-sm mutedText mt-4 text-center">
+    Already have an account?
+    <a [routerLink]="['/login']" class="text-blue-300">Login</a>
+  </p>
+</div>
+
+<mat-spinner *ngIf="loading" class="mx-auto my-10"></mat-spinner>
+
+
+

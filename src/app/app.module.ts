@@ -29,6 +29,8 @@ import { TransactionPageComponent } from './pages/transaction-page/transaction-p
 import { NewTransactionComponent } from './components/buttons/new-transaction/new-transaction.component';
 import { SavingsCardComponent } from './components/savings-card/savings-card.component';
 import { MatButtonModule } from "@angular/material/button";
+import { LoginPageComponent } from './pages/auth/login-page/login-page.component';
+import { SignupPageComponent } from './pages/auth/signup-page/signup-page.component';
 
 @NgModule({
   declarations: [
@@ -40,7 +42,9 @@ import { MatButtonModule } from "@angular/material/button";
     TableComponent,
     TransactionPageComponent,
     NewTransactionComponent,
-    SavingsCardComponent
+    SavingsCardComponent,
+    LoginPageComponent,
+    SignupPageComponent
   ],
   imports: [
     BrowserModule,

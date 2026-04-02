@@ -1,0 +1,40 @@
+<div class="login-container">
+  <p class="text-sm text-center mt-20 mutedText">Welcome to</p>
+  <p class="text-5xl font-bold text-center text-blue-300 mt-2 logo">TRA<span class="text-gray-300">CED</span></p>
+  <p class="text-center mt-8 mb-20 mutedText">Take control of your money with clarity and confidence.</p>
+
+  <form (ngSubmit)="onLogin()">
+    <div class="flex justify-center">
+      <div>
+        <p class="text-sm mutedText">Email</p>
+        <mat-form-field appearance="outline" class="">
+          <input matInput [(ngModel)]="email" name="email" class="!py-1">
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="flex justify-center my-4">
+      <div>
+        <p class="text-sm mutedText">Password</p>
+        <mat-form-field appearance="outline" class="">
+          <input type="password" matInput [(ngModel)]="password" name="password" class="!py-1">
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- <button type="submit" [disabled]="loading" > {{ loading ? 'Logging in...' : 'Login' }} </button> -->
+    <button type="submit" [disabled]="loading" class="min-w-[240px] flex items-center justify-center gap-1 bg-blue-300 text-white rounded-md shadow-md pl-2 pr-3 py-2 mx-auto my-6"> Login </button>
+
+    <p *ngIf="errorMessage" class="text-red-500 text-sm mt-4 text-center"> {{ errorMessage }} </p>
+  </form>
+
+  <p class="text-sm mutedText mt-4 text-center">
+    Don't have an account?
+    <a [routerLink]="['/signup']" class="text-blue-300">Sign up</a>
+  </p>
+</div>
+
+<mat-spinner *ngIf="loading" class="mx-auto my-10"></mat-spinner>
+
+
+

@@ -1,21 +1,31 @@
 <div class="max-w-[430px] mx-auto p-6">
-  <div class="flex items-center justify-between">
-    <div class="flex items-center gap-2">
-      <mat-icon *ngIf="!displayMenu" class="-mt-0.5 cursor-pointer icons" (click)="displayMenu = !displayMenu">menu</mat-icon>
-      <mat-icon *ngIf="displayMenu" class="-mt-0.5 z-10 cursor-pointer icons" (click)="displayMenu = !displayMenu">close</mat-icon>
-      <p class="text-2xl font-bold tracking-wide cursor-pointer logo" routerLink="/">TRA<span class="text-2xl font-bold tracking-wide text-gray-300 logo">CED</span></p>
+
+  <!-- HEADER + MENU ONLY FOR MAIN APP -->
+  <div *ngIf="!isAuthPage" class="mb-5">
+
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <mat-icon *ngIf="!displayMenu" class="-mt-0.5 cursor-pointer icons" (click)="displayMenu = true">menu</mat-icon>
+        <mat-icon *ngIf="displayMenu" class="-mt-0.5 cursor-pointer icons z-20" (click)="displayMenu = false">close</mat-icon>
+        <p class="text-2xl font-bold cursor-pointer text-blue-300 logo" routerLink="/">TRA<span class="text-gray-300">CED</span></p>
+      </div>
+
+      <div class="flex items-center gap-1 bg-blue-300 rounded-xl px-3 py-2 cursor-pointer">
+        <mat-icon class="text-white">add</mat-icon>
+        <p class="text-sm text-white" (click)="openDialog()">New Transaction</p>
+      </div>
     </div>
-    <div class="flex items-center justify-center gap-1 bg-blue-300 rounded-xl shadow-md px-3 py-2 cursor-pointer">
-      <mat-icon class="text-[16px] !w-4 !h-4 text-white -mt-0.5">add</mat-icon>
-      <p class="text-sm text-white" (click)="openDialog()">New Transaction</p>
+
+    <!-- MENU -->
+    <div *ngIf="displayMenu" class="absolute top-0 left-0 w-full h-screen flex flex-col items-center gap-4 pt-16 bg-white z-10">
+      <p *ngFor="let nav of navLinks" [routerLink]="nav.routerLink" (click)="displayMenu = false">{{nav.nav}}</p>
+      <p (click)="logout()">Logout</p>
+
+      <mat-spinner *ngIf="loading" class="mx-auto my-10"></mat-spinner>
     </div>
+
   </div>
 
-  <div *ngIf="displayMenu" class="absolute top-0 left-0 w-full h-screen flex flex-col items-center gap-4 pt-16 bg-white">
-    <p *ngFor="let nav of navLinks" [routerLink]="nav.routerLink" (click)="displayMenu = !displayMenu" class="cursor-pointer">{{nav.nav}}</p>
-  </div>
+  <router-outlet></router-outlet>
 
-  <div *ngIf="!displayMenu" class="mt-4">
-    <router-outlet></router-outlet>
-  </div>
 </div>

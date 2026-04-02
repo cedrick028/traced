@@ -1,4 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
+import { VarsService } from 'src/app/services/local/vars.service';
 
 @Component({
   selector: 'app-savings-card',
@@ -10,7 +11,7 @@ export class SavingsCardComponent implements OnInit {
   @Input() savings!: number;
   hideCardDetails: boolean = false;
 
-  constructor() { }
+  constructor(public vars:VarsService) { }
 
   ngOnInit(): void {
   }

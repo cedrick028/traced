@@ -9,6 +9,7 @@ import { Transaction } from 'src/app/interfaces/transaction';
 export class SupabaseService {
   private transactionsSubject = new BehaviorSubject<any[]>([]);
   transactions$ = this.transactionsSubject.asObservable();
+  userProfile: any = null;
 
   constructor() { }
 
@@ -28,9 +29,14 @@ export class SupabaseService {
 
   // SELECT
   async getAll(table: string) {
+    const user = await this.getUser();
+
+    if (!user) throw new Error('User not logged in.');
+
     const { data, error } = await supabase
       .from(table)
-      .select('*');
+      .select('*')
+      .eq('user_id', user.id);
 
     if (error) throw error;
     return data;
@@ -38,6 +44,12 @@ export class SupabaseService {
 
   // INSERT
   async insert(table: string, payload: any): Promise<Transaction> {
+    const user = await this.getUser();
+
+    if (!user) throw new Error('User not logged in.')
+
+    payload.user_id = user.id;
+
     const { data, error } = await supabase
       .from(table)
       .insert([payload])
@@ -75,4 +87,72 @@ export class SupabaseService {
     if (error) throw error;
     return data;
   }
+
+  // SIGN UP
+  async signUp(email: string, password: string, meta?: any) {
+    const { user, session, error } = await supabase.auth.signUp(
+      {
+        email,
+        password
+      },
+      {
+        data: meta
+      }
+    );
+
+    if (error) throw error;
+    return { user, session }
+  }
+
+  // LOGIN
+  async signIn(email: string, password: string) {
+    const { user, session, error } = await supabase.auth.signIn({
+      email,
+      password,
+    });
+
+    if (error) throw error;
+    return { user, session };
+  }
+
+  // GET CURRENT USER
+  async getUser() {
+    return supabase.auth.user();
+  }
+
+  onAuthStateChange(callback: (event: string, session: any) => void) {
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      callback(event, session);
+    });
+
+    return data;
+  }
+
+  // LOGOUT
+  async signOut() {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+  }
+
+  async loadUserProfile(userId: string) {
+    return await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single()
+  }
+
+  async updateProfile(userId: string, updates: any) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .update(updates)
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return data;
+  }
+
 }
