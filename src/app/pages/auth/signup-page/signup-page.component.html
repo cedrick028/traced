@@ -39,7 +39,7 @@
 
 <div class="login-container">
   <p class="text-sm text-center mt-10 mutedText">Welcome to</p>
-  <p class="text-5xl font-bold text-center text-blue-300 logo">TRA<span class="text-gray-300">CED</span></p>
+  <p class="text-5xl font-bold text-center text-blue-500 logo">TRA<span class="text-gray-300">CED</span></p>
   <p class="text-center my-20 mutedText">Create an account</p>
 
   <form (ngSubmit)="onSignup()">
@@ -61,14 +61,14 @@
       </div>
     </div>
 
-    <button type="submit" [disabled]="loading" class="min-w-[240px] flex items-center justify-center gap-1 bg-blue-300 text-white rounded-md shadow-md pl-2 pr-3 py-2 mx-auto my-6"> Sign Up </button>
+    <button type="submit" [disabled]="loading" class="min-w-[240px] flex items-center justify-center gap-1 bg-blue-500 text-white rounded-md shadow-md pl-2 pr-3 py-2 mx-auto my-6"> Sign Up </button>
 
     <p *ngIf="errorMessage" class="text-red-500 text-sm mt-4 text-center"> {{ errorMessage }} </p>
   </form>
 
   <p class="text-sm mutedText mt-4 text-center">
     Already have an account?
-    <a [routerLink]="['/login']" class="text-blue-300">Login</a>
+    <a [routerLink]="['/login']" class="text-blue-500">Login</a>
   </p>
 </div>
 
