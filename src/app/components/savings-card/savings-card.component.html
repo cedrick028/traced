@@ -1,13 +1,16 @@
 <div class="w-10/12 h-48 flex flex-col justify-between border rounded-2xl mx-auto mt-10 px-4 py-3 shadow-md overflow-hidden">
   <div>
-    <p class="text-gray-200 font-bold text-4xl italic cardBg">SAVINGS</p>
-    <p class="mt-2">John Cedrick Bayhon</p>
+    <div class="flex justify-between">
+      <p class="text-gray-200 font-bold text-4xl italic cardBg">SAVINGS</p>
+      <mat-icon class="cursor-pointer" (click)="hideCardDetails = !hideCardDetails">visibility</mat-icon>
+    </div>
+    <p class="mt-2" [ngClass]="hideCardDetails ? 'blur-sm' : 'blur-0'">John Cedrick B.</p>
   </div>
   <div class="flex justify-between items-center">
     <div class="px-4 py-1 rounded-md" [ngClass]="savings < 1000 ? 'bg-red-300' : savings > 1000 && savings < 3000 ? 'bg-yellow-300' : 'bg-green-300'">
       <p class="text-white text-sm">{{savings < 1000 ? 'Bad' : savings > 1000 && savings < 3000 ? 'Normal' : 'Good'}}</p>
     </div>
 
-    <p class="text-3xl font-bold text-right" >{{savings | currency: 'AED '}}</p>
+    <p class="text-3xl font-bold text-right" [ngClass]="hideCardDetails ? 'blur-md' : 'blur-0'" >{{savings | currency: 'AED '}}</p>
   </div>
 </div>

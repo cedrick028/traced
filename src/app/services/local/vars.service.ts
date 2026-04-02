@@ -14,7 +14,7 @@ export class VarsService {
 
   todaysDate: Date = new Date();
 
-  monthlyIncome: number = 7000;
+  monthlyIncome: number = 10000;
   categoryPercentage: any;
 
   constructor() { }

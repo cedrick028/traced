@@ -8,6 +8,7 @@ import { Component, OnInit, Input } from '@angular/core';
 export class SavingsCardComponent implements OnInit {
 
   @Input() savings!: number;
+  hideCardDetails: boolean = false;
 
   constructor() { }
 
