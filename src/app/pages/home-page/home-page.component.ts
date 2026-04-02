@@ -21,6 +21,9 @@ export class HomePageComponent implements OnInit, OnDestroy {
   telcoTotalExpense: any = 0;
 
   grandTotal: number = 0;
+  noData: boolean = false;
+  loading: boolean = false;
+  errorMessage = '';
   private destroy$ = new Subject<void>();
 
   categoryList: any = [
@@ -34,27 +37,36 @@ export class HomePageComponent implements OnInit, OnDestroy {
   constructor(private supabaseService: SupabaseService, public vars: VarsService, private datePipe: DatePipe) { }
 
   async ngOnInit() {
+    this.loading = true;
     await this.supabaseService.loadTransactions();
 
     this.supabaseService.transactions$
       .pipe(takeUntil(this.destroy$))
       .subscribe((transactions) => {
-        if (transactions && transactions.length > 0) {
-          const startDate = new Date(this.vars.todaysDate.getFullYear(), this.vars.todaysDate.getMonth(), 1);
-          const endDate = new Date(this.vars.todaysDate.getFullYear(), this.vars.todaysDate.getMonth() + 1, 0);
+        try {
+          if (transactions && transactions.length > 0) {
+            this.noData = false;
+            const startDate = new Date(this.vars.todaysDate.getFullYear(), this.vars.todaysDate.getMonth(), 1);
+            const endDate = new Date(this.vars.todaysDate.getFullYear(), this.vars.todaysDate.getMonth() + 1, 0);
 
-          const filtered = transactions.filter(t => {
-            const itemDate = new Date(t.created_at);
-            return itemDate >= startDate && itemDate <= endDate;
-          });
+            const filtered = transactions.filter(t => {
+              const itemDate = new Date(t.created_at);
+              return itemDate >= startDate && itemDate <= endDate;
+            });
 
-          const filteredToday = transactions.filter(t => {
-            return this.datePipe.transform(t.created_at, 'yyyy-MM-dd') === this.datePipe.transform(this.vars.todaysDate, 'yyyy-MM-dd');
-          });
+            const filteredToday = transactions.filter(t => {
+              return this.datePipe.transform(t.created_at, 'yyyy-MM-dd') === this.datePipe.transform(this.vars.todaysDate, 'yyyy-MM-dd');
+            });
 
-          this.vars.transactionSummaryDatasource.data = filteredToday;
-
-          this.calculateExpenses(filtered);
+            this.vars.transactionSummaryDatasource.data = filteredToday;
+            this.calculateExpenses(filtered);
+          } else {
+            this.noData = true;
+          }
+        } catch (error: any) {
+          this.errorMessage = error.message || 'Fetch failed';
+        } finally {
+          this.loading = false;
         }
       });
   }

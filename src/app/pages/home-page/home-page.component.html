@@ -1,8 +1,9 @@
-<mat-spinner *ngIf="!grandTotal" class="mx-auto my-10"></mat-spinner>
-<app-savings-card *ngIf="grandTotal" [savings]="vars.monthlyIncome - grandTotal"></app-savings-card>
+<mat-spinner *ngIf="loading" class="mx-auto my-10"></mat-spinner>
+<p *ngIf="loading" class="text-sm text-center px-16 mt-4 mutedText">Retrieving Data..</p>
+<p *ngIf="noData" class="text-sm text-center px-16 mt-4 mutedText">No data found.</p>
 
+<app-savings-card *ngIf="grandTotal" [savings]="vars.monthlyIncome - grandTotal"></app-savings-card>
 <p *ngIf="grandTotal" class="text-sm text-center px-16 mt-4 mutedText">You're on track with your spending and saving. Nice work!</p>
-<p *ngIf="!grandTotal" class="text-sm text-center px-16 mt-4 mutedText">Retrieving Data..</p>
 
 <div class="mt-12">
   <div class="flex items-center justify-between mb-4">
