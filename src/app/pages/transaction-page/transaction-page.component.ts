@@ -17,6 +17,7 @@ export class TransactionPageComponent implements OnInit, OnDestroy {
   public doughnutChartType: ChartType = 'doughnut';
 
   categoryValue: number[] = [];
+  totalPrice: number = 0;
 
 
   constructor(private supabaseService: SupabaseService, public vars: VarsService) { }
@@ -52,7 +53,7 @@ export class TransactionPageComponent implements OnInit, OnDestroy {
     }
 
     const categories = ['grocery', 'transportation', 'restaurant', 'shopping', 'telco'];
-    const totalPrice = Array.from(map.values()).reduce((sum: number, val: number) => sum + val, 0);
+    this.totalPrice = Array.from(map.values()).reduce((sum: number, val: number) => sum + val, 0);
     const totalCount = transactions.length;
 
     const categoryPercentages = categories.map(cat => {
@@ -63,12 +64,12 @@ export class TransactionPageComponent implements OnInit, OnDestroy {
       return {
         category: categoryName,
         count: count,
-        percentage: totalCount > 0 ? ((count / totalCount) * 100).toFixed(2) : 0
+        percentage: totalCount > 0 ? `${((count / totalCount) * 100).toFixed(2)}%` : '0.00%'
       };
     });
 
     this.vars.categoryPercentage = categoryPercentages;
-    this.categoryValue = this.vars.categoryPercentage.map((item: any) => Number(item.percentage));
+    this.categoryValue = this.vars.categoryPercentage.map((item: any) => Number.parseFloat(item.percentage));
 
     // Reassign chart data object so ng2-charts detects and re-renders.
     this.doughnutChartData = {
@@ -107,14 +108,17 @@ export class TransactionPageComponent implements OnInit, OnDestroy {
   // Chart options for styling
   public doughnutChartOptions: ChartOptions<'doughnut'> = {
     responsive: true,
-    layout: {
-      padding: {
-        bottom: 10
-      }
-    },
     plugins: {
+      datalabels: {
+        color: '#333',
+        font: {
+          size: 14,
+          weight: 'bold'
+        },
+        formatter: (value: number) => `${value}%`
+      },
       legend: {
-        display: true,
+        display: false,
         position: 'bottom', // 'top' | 'bottom' | 'left' | 'right'
         labels: {
           color: '#333', // legend text color
@@ -132,9 +136,11 @@ export class TransactionPageComponent implements OnInit, OnDestroy {
         backgroundColor: '#000',
         titleColor: '#fff',
         bodyColor: '#fff',
+        boxPadding: 5,
+        caretPadding: 20,
         callbacks: {
           label: function(context) {
-            return context.label + ': AED ' + context.formattedValue ;
+            return context.label + ': ' + context.formattedValue + '%';
           }
         }
       }
@@ -163,7 +169,7 @@ export class TransactionPageComponent implements OnInit, OnDestroy {
       ctx.fillStyle = '#333';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(`AED ${this.totalValue}`, centerX, centerY);
+      ctx.fillText(`AED ${this.totalPrice}`, centerX, centerY);
 
       // Optional sub text
       ctx.font = '12px sans-serif';
@@ -173,5 +179,7 @@ export class TransactionPageComponent implements OnInit, OnDestroy {
       ctx.restore();
     }
   };
+
+  public chartPlugins = [ChartDataLabels, this.doughnutCenterTextPlugin];
 
 }
