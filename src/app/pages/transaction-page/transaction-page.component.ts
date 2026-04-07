@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { VarsService } from 'src/app/services/local/vars.service';
 import { SupabaseService } from 'src/app/services/supbase-service/supabase.service';
 import { Subject } from 'rxjs';
+import { combineLatest } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { Chart, ChartOptions, ChartData, ChartType } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
@@ -24,6 +25,7 @@ export class TransactionPageComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.vars.displayTableFilter = false;
+    this.vars.setTransactionDateScope('month');
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -32,14 +34,43 @@ export class TransactionPageComponent implements OnInit, OnDestroy {
     this.vars.displayTableFilter = true;
     await this.supabaseService.ensureTransactionsLoaded();
 
-    this.supabaseService.transactions$
+    combineLatest([this.supabaseService.transactions$, this.vars.transactionDateScope$])
       .pipe(takeUntil(this.destroy$))
-      .subscribe((transactions) => {
-        if (transactions && transactions.length > 0) {
-          this.vars.transactionDatasource.data = transactions;
-          this.calculateCategoryPercentages(transactions);
-        }
+      .subscribe(([transactions, scope]) => {
+        const allTransactions = transactions || [];
+        const todayTransactions = this.filterTransactionsByToday(allTransactions);
+        const monthTransactions = this.filterTransactionsByCurrentMonth(allTransactions);
+
+        this.vars.transactionDatasource.data = scope === 'today' ? todayTransactions : allTransactions;
+        this.calculateCategoryPercentages(scope === 'today' ? todayTransactions : monthTransactions);
       });
+  }
+
+  private filterTransactionsByCurrentMonth(transactions: any[]) {
+    const currentDate = this.vars.todaysDate;
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+
+    return transactions.filter((transaction: any) => {
+      const transactionDate = new Date(transaction.created_at);
+      return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
+    });
+  }
+
+  private filterTransactionsByToday(transactions: any[]) {
+    const todayDateKey = this.formatLocalDateKey(this.vars.todaysDate);
+
+    return transactions.filter((transaction: any) => {
+      const transactionDateKey = this.formatLocalDateKey(new Date(transaction.created_at));
+      return transactionDateKey === todayDateKey;
+    });
+  }
+
+  private formatLocalDateKey(date: Date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   calculateCategoryPercentages(transactions: any[]) {

@@ -2,14 +2,11 @@ import { AfterViewInit, Component, ViewChild, Input } from '@angular/core';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { VarsService } from 'src/app/services/local/vars.service';
-import { DatePipe } from '@angular/common';
-import { SupabaseService } from 'src/app/services/supbase-service/supabase.service';
 
 @Component({
   selector: 'app-table',
   templateUrl: './table.component.html',
-  styleUrls: ['./table.component.css'],
-  providers: [DatePipe]
+  styleUrls: ['./table.component.css']
 })
 export class TableComponent implements AfterViewInit {
 
@@ -21,7 +18,7 @@ export class TableComponent implements AfterViewInit {
 
   filteredToday: boolean = false;
 
-  constructor(private supabaseService: SupabaseService, public vars: VarsService, private datePipe: DatePipe) {}
+  constructor(public vars: VarsService) {}
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator;
@@ -37,13 +34,11 @@ export class TableComponent implements AfterViewInit {
 
   filterTodaysTransaction() {
     this.filteredToday = true;
-    this.dataSource.data = this.dataSource.data.filter((date: any) => {
-      return this.datePipe.transform(date.created_at, 'yyyy-MM-dd') === this.datePipe.transform(this.vars.todaysDate, 'yyyy-MM-dd')
-    })
+    this.vars.setTransactionDateScope('today');
   }
 
-  async resetTodaysTransactionFilter() {
+  resetTodaysTransactionFilter() {
     this.filteredToday = false;
-    return this.dataSource.data = await this.supabaseService.getAll('transactions');
+    this.vars.setTransactionDateScope('month');
   }
 }
