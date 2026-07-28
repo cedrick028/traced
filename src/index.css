@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #141618;
+  --primary-hover: #333537;
+  --secondary: #EFEFF0;
+  --surface: #EFEFF0;
+  --muted: #A3A5A7;
+  --border: #E1E2E3;
+  --progress-dark: #34373A;
+  --progress-light: #CFD0D1;
+  --success: #22C55E;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --info: #3B82F6;
+}
+
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  font-optical-sizing: auto;
+  color: var(--primary);
+  font-size: 14px;
+  font-weight: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.centerXY {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.centerX {
+  display: flex;
+  align-items: center;
+}
