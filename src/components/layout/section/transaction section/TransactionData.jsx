@@ -7,7 +7,7 @@ export default function TransactionData() {
       <div className="centerX gap-3">
         <Icon icon={ShoppingCart} variant="primary" />
         <div>
-          <p className="font-medium">Grocery re-stock</p>
+          <p className="font-bold leading-none">Grocery re-stock</p>
           <div className="centerX">
             <p className="text-xs text-muted">BPI</p>
             <Dot className="text-muted" />
@@ -17,7 +17,7 @@ export default function TransactionData() {
       </div>
 
       <div>
-        <p className="font-medium">₱5,125.75</p>
+        <p className="font-bold leading-none">₱5,125.75</p>
         <p className="text-xs text-muted text-right">Jul 24</p>
       </div>
     </div>

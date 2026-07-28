@@ -17,7 +17,7 @@ export default function BankCard() {
       </div>
       <div>
         <p className="text-xs text-muted">Savings</p>
-        <p className="text-base font-medium">₱43,570.00</p>
+        <p className="text-base font-bold">₱43,570.00</p>
       </div>
     </div>
   )

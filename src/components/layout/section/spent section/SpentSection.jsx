@@ -6,7 +6,7 @@ export default function SpentSection() {
       <div className="centerX gap-3">
         <Info size={22} />
         <div>
-          <p>You have spent ₱1,235.00 today.</p>
+          <p className="font-medium">You have spent ₱1,235.00 today.</p>
           <p className="text-xs text-muted">July 28</p>
         </div>
       </div>
