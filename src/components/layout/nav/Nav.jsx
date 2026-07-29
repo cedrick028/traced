@@ -3,8 +3,14 @@ import { ChevronRight, X } from "lucide-react";
 import { navConfig } from "../../../config/navConfig";
 import { NavLink } from "react-router-dom";
 import Button from "../../UI/button/Button";
+import useAuth from "../../../hooks/useAuth";
 
 export default function Nav({ closeNav }) {
+  const { signOut, isSignOutLoading } = useAuth();
+  const handleSignOut = async () => {
+    await signOut();
+  }
+
   return (
     <div className="inset-0 fixed bg-gray-200/50 backdrop-blur-[2px]" onClick={closeNav}>
       <div className="w-8/12 h-screen flex flex-col justify-between bg-white p-4" onClick={(e) => e.stopPropagation()}>
@@ -25,7 +31,7 @@ export default function Nav({ closeNav }) {
           </div>
         </div>
         
-        <Button label="Sign Out" variant="secondary" />
+        <Button label={ isSignOutLoading ? "Signing Out..." : "Sign Out" } variant="secondary" onClick={handleSignOut} />
       </div>
     </div>
   )

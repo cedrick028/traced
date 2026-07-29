@@ -1,3 +1,5 @@
+import { formatString } from "../../../utils/formatString"
+
 /* eslint-disable react/prop-types */
 export default function Button({ label, icon: Icon, variant, onClick, className, disabled = false }) {
   const buttonStyle = {
@@ -18,7 +20,7 @@ export default function Button({ label, icon: Icon, variant, onClick, className,
         )
       }
       
-      <span className="text-[13px] mt-0.5">{ label ?? "Click" }</span>
+      <span className="text-[13px] mt-0.5">{ formatString(label) ?? "Click" }</span>
     </button>
   )
 }
