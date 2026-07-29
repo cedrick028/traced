@@ -7,6 +7,7 @@ import useAuth from "../../../hooks/useAuth";
 
 export default function Nav({ closeNav }) {
   const { signOut, isSignOutLoading } = useAuth();
+
   const handleSignOut = async () => {
     await signOut();
   }
@@ -19,7 +20,7 @@ export default function Nav({ closeNav }) {
           <div className="border rounded-xl divide-y mt-2">
             {
               navConfig.map((nav) => (
-                <NavLink to={nav.to} key={nav.id} className="centerX justify-between p-4">
+                <NavLink to={nav.to} key={nav.id} className="centerX justify-between p-4" onClick={closeNav}>
                   <div className="centerX gap-3">
                     <nav.icon size={16} />
                     <p className="text-[13px] mt-0.5">{ nav.label }</p>

@@ -1,7 +1,9 @@
+import ChipContainer from "./ChipContainer";
+
 export default function Transactions() {
   return (
-    <div>
-      Transactions
+    <div className="p-4">
+      <ChipContainer />
     </div>
   )
 }

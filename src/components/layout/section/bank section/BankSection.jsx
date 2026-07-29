@@ -7,7 +7,7 @@ export default function BankSection() {
   const { bankList, isBankLoading } = useBank();
   return (
     <div className="mt-10">
-      <SectionHeader sectionTitle="Accounts" />
+      <SectionHeader sectionTitle="Accounts" path="/accounts" />
       <div className="grid grid-cols-2 gap-4 mt-2">
         {
           isBankLoading ? (

@@ -5,7 +5,7 @@ import { supabase } from "../service/supabase";
 const AuthContext = createContext()
 
 const AuthProvider = ({ children }) => {
-  const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isSignUpLoading, setIsSignUpLoading] = useState(false);
   const [isSignInLoading, setIsSignInLoading] = useState(false);
   const [isSignOutLoading, setIsSignOutLoading] = useState(false);
@@ -16,15 +16,22 @@ const AuthProvider = ({ children }) => {
   useEffect(() => {
     const getSession = async () => {
       setIsAuthLoading(true)
-      const { data: { session }, error } = await supabase.auth.getSession()
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
 
-      if(error) throw error;
+        if (error) throw error;
 
-      setSession(session);
-      setUser(session?.user ?? null)
-      setDisplayName(session?.user?.user_metadata?.display_name ?? "")
-
-      setIsAuthLoading(false)
+        setSession(session);
+        setUser(session?.user ?? null)
+        setDisplayName(session?.user?.user_metadata?.display_name ?? "")
+      } catch (error) {
+        console.log(error)
+        setSession(null)
+        setUser(null)
+        setDisplayName("")
+      } finally {
+        setIsAuthLoading(false)
+      }
     }
 
     getSession();

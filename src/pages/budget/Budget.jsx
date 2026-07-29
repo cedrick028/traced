@@ -1,7 +1,11 @@
+import BudgetBreakdown from "./BudgetBreakdown";
+import BudgetHeader from "./BudgetHeader";
+
 export default function Budget() {
   return (
-    <div>
-      Budget
+    <div className="flex flex-col gap-4 p-4">
+      <BudgetHeader />
+      <BudgetBreakdown />
     </div>
   )
 }

@@ -6,7 +6,7 @@ export default function TransactionSection() {
   const { transactionList, isTransactionLoading } = useTransaction();
   return (
     <div className="mt-10">
-      <SectionHeader sectionTitle="Transactions" />
+      <SectionHeader sectionTitle="Transactions" path="/transactions" />
 
       <div className="flex flex-col border rounded-xl divide-y mt-2">
         {
