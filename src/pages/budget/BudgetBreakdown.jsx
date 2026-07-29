@@ -21,11 +21,11 @@ export default function BudgetBreakdown() {
         <div className="centerX justify-between mt-4">
           <div>
             <p className="text-muted">Spent</p>
-            <p className="text-lg font-medium">₱7,040.00</p>
+            <p className="text-base font-medium">₱7,040.00</p>
           </div>
           <div>
             <p className="text-muted">Total budget</p>
-            <p className="text-lg font-medium">₱20,000.00</p>
+            <p className="text-base font-medium">₱20,000.00</p>
           </div>
         </div>
       </div>
