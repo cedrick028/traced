@@ -12,10 +12,53 @@ const normalizeAmount = (value) => {
   return Number.isFinite(parsedValue) ? parsedValue : 0;
 }
 
+const isUserScopedInsertError = (error) => {
+  const message = `${error?.message ?? ""} ${error?.details ?? ""}`.toLowerCase();
+  return (
+    error?.code === "42501"
+    || message.includes("permission")
+    || message.includes("rls")
+    || message.includes("user_id")
+    || message.includes("created_by")
+    || message.includes("null value")
+  );
+}
+
 const TransactionProvider = ({ children }) => {
   const [transactionList, setTransactionList] = useState([])
   const [isTransactionLoading, setIsTransactionLoading] = useState(false);
   const { user } = useAuth();
+
+  const insertTransaction = async (payload) => {
+    let query = supabase
+      .from("transactions")
+      .insert(payload)
+      .select()
+      .single();
+
+    let { data, error } = await query;
+
+    if (error && user?.id && isUserScopedInsertError(error)) {
+      query = supabase
+        .from("transactions")
+        .insert({ ...payload, created_by: user.id })
+        .select()
+        .single();
+
+      ({ data, error } = await query);
+    }
+
+    if (error) {
+      console.error("Transaction insert failed", {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
+    }
+
+    return { data, error };
+  }
 
   useEffect(() => {
     if (!user?.id) { // To check whether a user has logged in or not to reset transaction list
@@ -50,7 +93,7 @@ const TransactionProvider = ({ children }) => {
     getTransactionList();
   }, [user?.id])
 
-  const addExpenseTransaction = async ({ item, quantity, pricePerPiece, bank, bankId }) => {
+  const addExpenseTransaction = async ({ item, category, quantity, pricePerPiece, bank }) => {
     const normalizedQuantity = Math.max(1, normalizeAmount(quantity));
     const normalizedPrice = Math.max(0, normalizeAmount(pricePerPiece));
     const totalPrice = normalizedQuantity * normalizedPrice;
@@ -61,16 +104,12 @@ const TransactionProvider = ({ children }) => {
       price_per_piece: normalizedPrice,
       price: totalPrice,
       bank,
-      bank_id: bankId,
-      category: "expense",
-      type: "expense"
+      created_by: user?.id,
+      category: String(category ?? "Others").trim() || "Others",
+      note: null
     };
 
-    const { data, error } = await supabase
-      .from("transactions")
-      .insert(payload)
-      .select()
-      .single();
+    const { data, error } = await insertTransaction(payload);
 
     if (!error && data) {
       setTransactionList((currentList) => [data, ...currentList]);
@@ -79,7 +118,7 @@ const TransactionProvider = ({ children }) => {
     return { data, error };
   }
 
-  const addIncomeTransaction = async ({ amount, bank, bankId }) => {
+  const addIncomeTransaction = async ({ amount, bank }) => {
     const normalizedAmount = Math.max(0, normalizeAmount(amount));
 
     const payload = {
@@ -88,16 +127,12 @@ const TransactionProvider = ({ children }) => {
       price_per_piece: normalizedAmount,
       price: normalizedAmount,
       bank,
-      bank_id: bankId,
+      created_by: user?.id,
       category: "income",
-      type: "income"
+      note: null
     };
 
-    const { data, error } = await supabase
-      .from("transactions")
-      .insert(payload)
-      .select()
-      .single();
+    const { data, error } = await insertTransaction(payload);
 
     if (!error && data) {
       setTransactionList((currentList) => [data, ...currentList]);

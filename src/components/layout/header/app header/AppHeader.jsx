@@ -4,14 +4,16 @@ import { useState } from "react";
 import useAuth from "../../../../hooks/useAuth";
 import useBank from "../../../../hooks/useBank";
 import useTransaction from "../../../../hooks/useTransaction";
+import { getTotalBalance } from "../../../../utils/bankBalance";
 import { formatCurrency } from "../../../../utils/formatCurrency";
 import Logo from "../../logo/Logo";
 
 export default function AppHeader({ openNav }) {
   const { displayName } = useAuth();
-  const { bankList, totalBalance } = useBank();
+  const { bankList } = useBank();
   const { transactionList } = useTransaction();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const totalBalance = getTotalBalance(bankList, transactionList);
 
   return (
     <>

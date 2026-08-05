@@ -55,11 +55,28 @@ const BankProvider = ({ children }) => {
       balance: normalizeAmount(balance)
     };
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("banks")
       .insert(payload)
       .select()
       .single();
+
+    const isPermissionError = error?.code === "42501"
+      || error?.status === 403
+      || /row-level security|policy/i.test(error?.message ?? "");
+
+    if (error && isPermissionError && user?.id) {
+      const retryResponse = await supabase
+        .from("banks")
+        .insert({ ...payload, user_id: user.id })
+        .select()
+        .single();
+
+      if (!retryResponse.error) {
+        data = retryResponse.data;
+        error = null;
+      }
+    }
 
     if (!error && data) {
       setBankList((currentList) => [data, ...currentList]);
@@ -112,20 +129,18 @@ const BankProvider = ({ children }) => {
     const existingBalance = normalizeAmount(selectedBank.balance);
     const updatedBalance = Math.max(0, existingBalance + normalizeAmount(amountDelta));
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("banks")
       .update({ balance: updatedBalance })
-      .eq("id", bankId)
-      .select()
-      .single();
+      .eq("id", bankId);
 
-    if (!error && data) {
+    if (!error) {
       setBankList((currentList) => currentList.map((bank) => (
-        bank.id === bankId ? data : bank
+        bank.id === bankId ? { ...bank, balance: updatedBalance } : bank
       )));
     }
 
-    return { data, error };
+    return { data: { id: bankId, balance: updatedBalance }, error };
   }
 
   const totalBalance = bankList.reduce((sum, bank) => (

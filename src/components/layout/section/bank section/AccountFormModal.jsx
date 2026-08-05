@@ -25,12 +25,29 @@ export default function AccountFormModal({ isOpen, onClose, onCreated }) {
   const { addBank } = useBank();
   const [formValue, setFormValue] = useState(initialFormValue);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
   if (!isOpen) return null;
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (isSubmitting) return;
+
+    const normalizedBalance = Number(formValue.balance);
+
+    if (!formValue.bankCategory || !formValue.bankType.trim()) {
+      setFormError("Please complete all required fields.");
+      return;
+    }
+
+    if (!Number.isFinite(normalizedBalance) || normalizedBalance < 0) {
+      setFormError("Balance must be 0 or higher.");
+      return;
+    }
+
+    setFormError("");
+    setSubmitError("");
 
     setIsSubmitting(true);
     const { data, error } = await addBank({
@@ -41,8 +58,12 @@ export default function AccountFormModal({ isOpen, onClose, onCreated }) {
 
     if (!error) {
       setFormValue(initialFormValue);
+      setFormError("");
+      setSubmitError("");
       onClose();
       onCreated?.(data);
+    } else {
+      setSubmitError("Unable to add bank account. Please check your permissions and try again.");
     }
 
     setIsSubmitting(false);
@@ -61,7 +82,11 @@ export default function AccountFormModal({ isOpen, onClose, onCreated }) {
         <select
           className="w-full h-11 px-3 border rounded-lg mt-4"
           value={formValue.bankCategory}
-          onChange={(event) => setFormValue((value) => ({ ...value, bankCategory: event.target.value }))}
+          onChange={(event) => {
+            setFormValue((value) => ({ ...value, bankCategory: event.target.value }));
+            if (formError) setFormError("");
+            if (submitError) setSubmitError("");
+          }}
           required
         >
           <option value="" disabled>Select bank</option>
@@ -76,7 +101,11 @@ export default function AccountFormModal({ isOpen, onClose, onCreated }) {
           className="w-full h-11 px-3 border rounded-lg mt-2"
           placeholder="Bank type"
           value={formValue.bankType}
-          onChange={(event) => setFormValue((value) => ({ ...value, bankType: event.target.value }))}
+          onChange={(event) => {
+            setFormValue((value) => ({ ...value, bankType: event.target.value }));
+            if (formError) setFormError("");
+            if (submitError) setSubmitError("");
+          }}
           required
         />
 
@@ -86,9 +115,21 @@ export default function AccountFormModal({ isOpen, onClose, onCreated }) {
           type="number"
           min="0"
           value={formValue.balance}
-          onChange={(event) => setFormValue((value) => ({ ...value, balance: event.target.value }))}
+          onChange={(event) => {
+            setFormValue((value) => ({ ...value, balance: event.target.value }));
+            if (formError) setFormError("");
+            if (submitError) setSubmitError("");
+          }}
           required
         />
+
+        {
+          formError && <p className="text-danger text-xs mt-2">{formError}</p>
+        }
+
+        {
+          submitError && <p className="text-danger text-xs mt-2">{submitError}</p>
+        }
 
         <button
           type="submit"

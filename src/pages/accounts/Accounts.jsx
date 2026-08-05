@@ -7,6 +7,7 @@ import AccountFormModal from "../../components/layout/section/bank section/Accou
 import Icon from "../../components/UI/icon/Icon";
 import useBank from "../../hooks/useBank"
 import useTransaction from "../../hooks/useTransaction";
+import { getBankBalance } from "../../utils/bankBalance";
 import TransactionData from "../../components/layout/section/transaction section/TransactionData";
 import AccountCard from "./AccountCard";
 
@@ -102,7 +103,7 @@ export default function Accounts() {
                 key={bank.id}
                 bankName={bank.bank_name}
                 cardType={bank.card_type ?? bank.bank_type}
-                balance={bank.balance}
+                balance={getBankBalance(bank, transactionList)}
                 onSelect={() => handleSelectAccount(bank.id)}
                 isSelected={String(selectedBankId) === String(bank.id)}
                 onDelete={() => deleteBank(bank.id)}

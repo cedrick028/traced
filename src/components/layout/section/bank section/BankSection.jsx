@@ -2,6 +2,8 @@ import Skeleton from "@mui/material/Skeleton";
 import { Landmark } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import useBank from "../../../../hooks/useBank";
+import useTransaction from "../../../../hooks/useTransaction";
+import { getBankBalance } from "../../../../utils/bankBalance";
 import EmptyState from "../../../UI/empty/EmptyState";
 import SectionHeader from "../section header/SectionHeader";
 import AddAccount from "./AddAccount";
@@ -9,6 +11,7 @@ import BankCard from "./BankCard";
 
 export default function BankSection() {
   const { bankList, isBankLoading } = useBank();
+  const { transactionList } = useTransaction();
   const navigate = useNavigate();
 
   const handleViewAccount = (bankId) => {
@@ -46,7 +49,7 @@ export default function BankSection() {
                 key={bank.id}
                 bankName={bank.bank_name}
                 cardType={bank.card_type ?? bank.bank_type}
-                balance={bank.balance}
+                balance={getBankBalance(bank, transactionList)}
                 onMoreClick={() => handleViewAccount(bank.id)}
               />
             ))

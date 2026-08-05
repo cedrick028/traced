@@ -5,10 +5,22 @@ import { FunnelX, ReceiptText, X } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import EmptyState from "../../components/UI/empty/EmptyState";
 import TransactionData from "../../components/layout/section/transaction section/TransactionData";
-import useBank from "../../hooks/useBank";
 import useTransaction from "../../hooks/useTransaction";
 import { isIncomeTransaction } from "../../utils/transactionType";
 import ChipContainer from "./ChipContainer";
+
+const TRANSACTION_CATEGORIES = [
+  "Others",
+  "Grocery",
+  "Food",
+  "Shopping",
+  "Utilities",
+  "Transportation",
+  "Subscriptions",
+  "Entertainment",
+  "Income",
+  "Expense"
+];
 
 const getDayKey = (dateValue) => {
   const date = new Date(dateValue);
@@ -35,13 +47,15 @@ const getDateHeaderLabel = (dateValue) => {
 
 export default function Transactions() {
   const { transactionList, isTransactionLoading, deleteTransaction, updateTransaction } = useTransaction();
-  const { bankList, adjustBankBalance } = useBank();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [isUpdatingTransaction, setIsUpdatingTransaction] = useState(false);
+  const [filterError, setFilterError] = useState("");
+  const [editError, setEditError] = useState("");
   const [editForm, setEditForm] = useState({
+    category: "Others",
     quantity: "1",
     pricePerPiece: "",
     amount: ""
@@ -142,6 +156,34 @@ export default function Transactions() {
       startDate: "",
       endDate: ""
     });
+    setFilterError("");
+  }
+
+  const applyAdvancedFilter = () => {
+    if (advancedFilter.mode === "date" && !advancedFilter.date) {
+      setFilterError("Please select a specific date.");
+      return;
+    }
+
+    if (advancedFilter.mode === "month" && !advancedFilter.month) {
+      setFilterError("Please select a specific month.");
+      return;
+    }
+
+    if (advancedFilter.mode === "range") {
+      if (!advancedFilter.startDate || !advancedFilter.endDate) {
+        setFilterError("Please choose both start and end date.");
+        return;
+      }
+
+      if (advancedFilter.startDate > advancedFilter.endDate) {
+        setFilterError("Start date must be earlier than or equal to end date.");
+        return;
+      }
+    }
+
+    setFilterError("");
+    setIsFilterOpen(false);
   }
 
   const openEditModal = (transaction) => {
@@ -155,6 +197,7 @@ export default function Transactions() {
 
     setEditingTransaction(transaction);
     setEditForm({
+      category: String(transaction.category ?? "Others"),
       quantity: String(Math.max(1, currentQuantity)),
       pricePerPiece: String(Math.max(0, currentPricePerPiece)),
       amount: String(Math.max(0, currentAmount))
@@ -166,11 +209,14 @@ export default function Transactions() {
         quantity: "1"
       }));
     }
+
+    setEditError("");
   }
 
   const closeEditModal = () => {
     setEditingTransaction(null);
-    setEditForm({ quantity: "1", pricePerPiece: "", amount: "" });
+    setEditForm({ category: "Others", quantity: "1", pricePerPiece: "", amount: "" });
+    setEditError("");
   }
 
   const handleUpdateTransaction = async (event) => {
@@ -178,48 +224,66 @@ export default function Transactions() {
     if (!editingTransaction || isUpdatingTransaction) return;
 
     const wasIncome = isIncomeTransaction(editingTransaction);
-    const oldAmount = Number(editingTransaction.price || 0);
+    const normalizedCategory = String(editForm.category ?? "").trim();
+
+    if (!normalizedCategory) {
+      setEditError("Please select a category.");
+      return;
+    }
 
     let nextAmount = 0;
-    let updateFields = {};
+    let updateFields = {
+      category: normalizedCategory
+    };
 
     if (wasIncome) {
-      const normalizedAmount = Math.max(0, Number(editForm.amount || 0));
+      const normalizedAmount = Number(editForm.amount || 0);
+
+      if (!Number.isFinite(normalizedAmount) || normalizedAmount < 0) {
+        setEditError("Amount must be 0 or higher.");
+        return;
+      }
+
       nextAmount = normalizedAmount;
       updateFields = {
+        ...updateFields,
         quantity: 1,
         price_per_piece: normalizedAmount,
         price: normalizedAmount
       };
     } else {
-      const normalizedQuantity = Math.max(1, Number(editForm.quantity || 1));
-      const normalizedPricePerPiece = Math.max(0, Number(editForm.pricePerPiece || 0));
+      const normalizedQuantity = Number(editForm.quantity || 1);
+      const normalizedPricePerPiece = Number(editForm.pricePerPiece || 0);
+
+      if (!Number.isFinite(normalizedQuantity) || normalizedQuantity < 1) {
+        setEditError("Quantity must be at least 1.");
+        return;
+      }
+
+      if (!Number.isFinite(normalizedPricePerPiece) || normalizedPricePerPiece < 0) {
+        setEditError("Price per piece must be 0 or higher.");
+        return;
+      }
+
       nextAmount = normalizedQuantity * normalizedPricePerPiece;
       updateFields = {
+        ...updateFields,
         quantity: normalizedQuantity,
         price_per_piece: normalizedPricePerPiece,
         price: nextAmount
       };
     }
 
+    setEditError("");
+
     setIsUpdatingTransaction(true);
 
     const { error: updateError } = await updateTransaction(editingTransaction.id, updateFields);
 
     if (!updateError) {
-      const deltaAmount = nextAmount - oldAmount;
-
-      const fallbackBank = bankList.find((bank) => (
-        String(bank.bank_name ?? "").toLowerCase() === String(editingTransaction.bank ?? "").toLowerCase()
-      ));
-      const bankId = editingTransaction.bank_id ?? fallbackBank?.id;
-
-      if (bankId && deltaAmount !== 0) {
-        const adjustmentDelta = wasIncome ? deltaAmount : -deltaAmount;
-        await adjustBankBalance(bankId, adjustmentDelta);
-      }
-
       closeEditModal();
+    } else {
+      setEditError("Unable to update transaction. Please try again.");
     }
 
     setIsUpdatingTransaction(false);
@@ -250,7 +314,10 @@ export default function Transactions() {
                 <select
                   className="w-full h-11 px-3 border rounded-lg mt-1"
                   value={advancedFilter.mode}
-                  onChange={(event) => setAdvancedFilter((currentFilter) => ({ ...currentFilter, mode: event.target.value }))}
+                  onChange={(event) => {
+                    setAdvancedFilter((currentFilter) => ({ ...currentFilter, mode: event.target.value }));
+                    if (filterError) setFilterError("");
+                  }}
                 >
                   <option value="none">None</option>
                   <option value="date">Specific date</option>
@@ -265,7 +332,10 @@ export default function Transactions() {
                     type="date"
                     className="w-full h-11 px-3 border rounded-lg mt-3"
                     value={advancedFilter.date}
-                    onChange={(event) => setAdvancedFilter((currentFilter) => ({ ...currentFilter, date: event.target.value }))}
+                    onChange={(event) => {
+                      setAdvancedFilter((currentFilter) => ({ ...currentFilter, date: event.target.value }));
+                      if (filterError) setFilterError("");
+                    }}
                   />
                 )
               }
@@ -276,7 +346,10 @@ export default function Transactions() {
                     type="month"
                     className="w-full h-11 px-3 border rounded-lg mt-3"
                     value={advancedFilter.month}
-                    onChange={(event) => setAdvancedFilter((currentFilter) => ({ ...currentFilter, month: event.target.value }))}
+                    onChange={(event) => {
+                      setAdvancedFilter((currentFilter) => ({ ...currentFilter, month: event.target.value }));
+                      if (filterError) setFilterError("");
+                    }}
                   />
                 )
               }
@@ -288,16 +361,26 @@ export default function Transactions() {
                       type="date"
                       className="w-full h-11 px-3 border rounded-lg"
                       value={advancedFilter.startDate}
-                      onChange={(event) => setAdvancedFilter((currentFilter) => ({ ...currentFilter, startDate: event.target.value }))}
+                      onChange={(event) => {
+                        setAdvancedFilter((currentFilter) => ({ ...currentFilter, startDate: event.target.value }));
+                        if (filterError) setFilterError("");
+                      }}
                     />
                     <input
                       type="date"
                       className="w-full h-11 px-3 border rounded-lg"
                       value={advancedFilter.endDate}
-                      onChange={(event) => setAdvancedFilter((currentFilter) => ({ ...currentFilter, endDate: event.target.value }))}
+                      onChange={(event) => {
+                        setAdvancedFilter((currentFilter) => ({ ...currentFilter, endDate: event.target.value }));
+                        if (filterError) setFilterError("");
+                      }}
                     />
                   </div>
                 )
+              }
+
+              {
+                filterError && <p className="text-danger text-xs mt-2">{filterError}</p>
               }
 
               <button
@@ -311,7 +394,7 @@ export default function Transactions() {
               <button
                 type="button"
                 className="w-full h-11 text-white bg-primary rounded-lg mt-2"
-                onClick={() => setIsFilterOpen(false)}
+                onClick={applyAdvancedFilter}
               >
                 Apply
               </button>
@@ -331,6 +414,25 @@ export default function Transactions() {
                 </button>
               </div>
 
+              <div className="mt-3">
+                <p className="text-xs text-muted">Category</p>
+                <select
+                  className="w-full h-11 px-3 border rounded-lg mt-1"
+                  value={editForm.category}
+                  onChange={(event) => {
+                    setEditForm((currentForm) => ({ ...currentForm, category: event.target.value }));
+                    if (editError) setEditError("");
+                  }}
+                  required
+                >
+                  {
+                    TRANSACTION_CATEGORIES.map((categoryOption) => (
+                      <option key={categoryOption} value={categoryOption}>{categoryOption}</option>
+                    ))
+                  }
+                </select>
+              </div>
+
               {
                 isIncomeTransaction(editingTransaction) ? (
                   <div className="mt-3">
@@ -341,7 +443,10 @@ export default function Transactions() {
                       step="0.01"
                       className="w-full h-11 px-3 border rounded-lg mt-1"
                       value={editForm.amount}
-                      onChange={(event) => setEditForm((currentForm) => ({ ...currentForm, amount: event.target.value }))}
+                      onChange={(event) => {
+                        setEditForm((currentForm) => ({ ...currentForm, amount: event.target.value }));
+                        if (editError) setEditError("");
+                      }}
                       required
                     />
                   </div>
@@ -354,7 +459,10 @@ export default function Transactions() {
                         min="1"
                         className="w-full h-11 px-3 border rounded-lg mt-1"
                         value={editForm.quantity}
-                        onChange={(event) => setEditForm((currentForm) => ({ ...currentForm, quantity: event.target.value }))}
+                        onChange={(event) => {
+                          setEditForm((currentForm) => ({ ...currentForm, quantity: event.target.value }));
+                          if (editError) setEditError("");
+                        }}
                         required
                       />
                     </div>
@@ -367,12 +475,19 @@ export default function Transactions() {
                         step="0.01"
                         className="w-full h-11 px-3 border rounded-lg mt-1"
                         value={editForm.pricePerPiece}
-                        onChange={(event) => setEditForm((currentForm) => ({ ...currentForm, pricePerPiece: event.target.value }))}
+                        onChange={(event) => {
+                          setEditForm((currentForm) => ({ ...currentForm, pricePerPiece: event.target.value }));
+                          if (editError) setEditError("");
+                        }}
                         required
                       />
                     </div>
                   </>
                 )
+              }
+
+              {
+                editError && <p className="text-danger text-xs mt-2">{editError}</p>
               }
 
               <button

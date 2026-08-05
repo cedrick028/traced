@@ -6,12 +6,13 @@ import useAuth from "../../../hooks/useAuth";
 import BudgetSummary from "./BudgetSummary";
 import useBank from "../../../hooks/useBank";
 import useTransaction from "../../../hooks/useTransaction";
+import { getTotalBalance } from "../../../utils/bankBalance";
 import { formatCurrency } from "../../../utils/formatCurrency";
 
 export default function Card() {
   const { displayName } = useAuth();
-  const { bankList, totalBalance, adjustBankBalance } = useBank();
-  const { addIncomeTransaction } = useTransaction();
+  const { bankList } = useBank();
+  const { addIncomeTransaction, transactionList } = useTransaction();
 
   const [isAddMoneyOpen, setIsAddMoneyOpen] = useState(false);
   const [showAccountPicker, setShowAccountPicker] = useState(false);
@@ -19,9 +20,14 @@ export default function Card() {
   const [amount, setAmount] = useState("");
   const [selectedBankId, setSelectedBankId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [submitError, setSubmitError] = useState("");
+  const totalBalance = getTotalBalance(bankList, transactionList);
 
   const handleOpenAddMoney = () => {
     setIsAddMoneyOpen(true);
+    setFormError("");
+    setSubmitError("");
 
     if (!selectedBankId && bankList[0]?.id) {
       setSelectedBankId(String(bankList[0].id));
@@ -31,10 +37,26 @@ export default function Card() {
   const handleAddMoney = async () => {
     const numericAmount = Number(amount);
 
-    if (!selectedBankId || !Number.isFinite(numericAmount) || numericAmount <= 0 || isSubmitting) return;
+    if (isSubmitting) return;
+
+    if (!selectedBankId) {
+      setFormError("Please select an account.");
+      return;
+    }
+
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+      setFormError("Please enter an amount greater than 0.");
+      return;
+    }
 
     const selectedBank = bankList.find((bank) => String(bank.id) === selectedBankId);
-    if (!selectedBank) return;
+    if (!selectedBank) {
+      setFormError("Selected account was not found.");
+      return;
+    }
+
+    setFormError("");
+    setSubmitError("");
 
     setIsSubmitting(true);
 
@@ -45,17 +67,13 @@ export default function Card() {
     });
 
     if (!incomeError) {
-      const { error: balanceError } = await adjustBankBalance(selectedBank.id, numericAmount);
-
-      if (!balanceError) {
-        setAmount("");
-        setIsAddMoneyOpen(false);
-        setShowAccountPicker(false);
-      } else {
-        console.log(balanceError);
-      }
+      setAmount("");
+      setIsAddMoneyOpen(false);
+      setShowAccountPicker(false);
+      setSubmitError("");
     } else {
       console.log(incomeError);
+      setSubmitError("Unable to add money right now. Please try again.");
     }
 
     setIsSubmitting(false);
@@ -104,7 +122,11 @@ export default function Card() {
                 <input
                   type="number"
                   value={amount}
-                  onChange={(event) => setAmount(event.target.value)}
+                  onChange={(event) => {
+                    setAmount(event.target.value);
+                    if (formError) setFormError("");
+                    if (submitError) setSubmitError("");
+                  }}
                   placeholder="0"
                   className="w-full h-11 px-3 border rounded-lg mt-1 focus:outline-none"
                 />
@@ -117,7 +139,11 @@ export default function Card() {
                     <select
                       className="w-full h-11 px-3 border rounded-lg mt-1"
                       value={selectedBankId}
-                      onChange={(event) => setSelectedBankId(event.target.value)}
+                      onChange={(event) => {
+                        setSelectedBankId(event.target.value);
+                        if (formError) setFormError("");
+                        if (submitError) setSubmitError("");
+                      }}
                     >
                       {
                         bankList.map((bank) => (
@@ -133,6 +159,14 @@ export default function Card() {
                 bankList.length === 0 && (
                   <p className="text-xs text-danger mt-3">Add an account first before adding balance.</p>
                 )
+              }
+
+              {
+                formError && <p className="text-danger text-xs mt-2">{formError}</p>
+              }
+
+              {
+                submitError && <p className="text-danger text-xs mt-2">{submitError}</p>
               }
 
               <button

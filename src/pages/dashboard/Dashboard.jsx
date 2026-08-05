@@ -8,21 +8,39 @@ import TransactionSection from "../../components/layout/section/transaction sect
 import useBank from "../../hooks/useBank";
 import useTransaction from "../../hooks/useTransaction";
 
+const TRANSACTION_CATEGORIES = [
+  "Others",
+  "Grocery",
+  "Food",
+  "Shopping",
+  "Utilities",
+  "Transportation",
+  "Subscriptions",
+  "Entertainment",
+  "Income",
+  "Expense"
+];
+
 export default function Dashboard() {
-  const { bankList, adjustBankBalance } = useBank();
+  const { bankList } = useBank();
   const { addExpenseTransaction } = useTransaction();
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedBankId, setSelectedBankId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [submitError, setSubmitError] = useState("");
   const [formValue, setFormValue] = useState({
     item: "",
+    category: "Others",
     quantity: "1",
     pricePerPiece: ""
   });
 
   const openCreateModal = () => {
     setIsCreateOpen(true);
+    setFormError("");
+    setSubmitError("");
 
     if (!selectedBankId && bankList[0]?.id) {
       setSelectedBankId(String(bankList[0].id));
@@ -33,16 +51,44 @@ export default function Dashboard() {
     event.preventDefault();
     if (isSubmitting) return;
 
+    const quantityValue = Number(formValue.quantity);
+    const pricePerPieceValue = Number(formValue.pricePerPiece);
+
+    if (!formValue.item.trim()) {
+      setFormError("Item name is required.");
+      return;
+    }
+
+    if (!Number.isFinite(quantityValue) || quantityValue < 1) {
+      setFormError("Quantity must be at least 1.");
+      return;
+    }
+
+    if (!Number.isFinite(pricePerPieceValue) || pricePerPieceValue < 0) {
+      setFormError("Price per piece must be 0 or higher.");
+      return;
+    }
+
+    if (!formValue.category.trim()) {
+      setFormError("Please select a category.");
+      return;
+    }
+
     const selectedBank = bankList.find((bank) => String(bank.id) === String(selectedBankId));
 
-    if (!selectedBank) return;
+    if (!selectedBank) {
+      setFormError("Please select an account.");
+      return;
+    }
 
-    const totalExpense = Number(formValue.quantity) * Number(formValue.pricePerPiece);
+    setFormError("");
+    setSubmitError("");
 
     setIsSubmitting(true);
 
     const { error: transactionError } = await addExpenseTransaction({
       item: formValue.item,
+      category: formValue.category,
       quantity: formValue.quantity,
       pricePerPiece: formValue.pricePerPiece,
       bank: selectedBank.bank_name,
@@ -50,9 +96,11 @@ export default function Dashboard() {
     });
 
     if (!transactionError) {
-      await adjustBankBalance(selectedBank.id, -Math.max(0, totalExpense));
-      setFormValue({ item: "", quantity: "1", pricePerPiece: "" });
+      setFormValue({ item: "", category: "Others", quantity: "1", pricePerPiece: "" });
       setIsCreateOpen(false);
+      setSubmitError("");
+    } else {
+      setSubmitError(transactionError.message || "Unable to add transaction right now. Please try again.");
     }
 
     setIsSubmitting(false);
@@ -91,9 +139,30 @@ export default function Dashboard() {
                 className="w-full h-11 px-3 border rounded-lg mt-4"
                 placeholder="Item name"
                 value={formValue.item}
-                onChange={(event) => setFormValue((value) => ({ ...value, item: event.target.value }))}
+                onChange={(event) => {
+                  setFormValue((value) => ({ ...value, item: event.target.value }));
+                  if (formError) setFormError("");
+                  if (submitError) setSubmitError("");
+                }}
                 required
               />
+
+              <select
+                className="w-full h-11 px-3 border rounded-lg mt-2"
+                value={formValue.category}
+                onChange={(event) => {
+                  setFormValue((value) => ({ ...value, category: event.target.value }));
+                  if (formError) setFormError("");
+                  if (submitError) setSubmitError("");
+                }}
+                required
+              >
+                {
+                  TRANSACTION_CATEGORIES.map((categoryOption) => (
+                    <option key={categoryOption} value={categoryOption}>{categoryOption}</option>
+                  ))
+                }
+              </select>
 
               <input
                 className="w-full h-11 px-3 border rounded-lg mt-2"
@@ -101,7 +170,11 @@ export default function Dashboard() {
                 type="number"
                 min="1"
                 value={formValue.quantity}
-                onChange={(event) => setFormValue((value) => ({ ...value, quantity: event.target.value }))}
+                onChange={(event) => {
+                  setFormValue((value) => ({ ...value, quantity: event.target.value }));
+                  if (formError) setFormError("");
+                  if (submitError) setSubmitError("");
+                }}
                 required
               />
 
@@ -112,7 +185,11 @@ export default function Dashboard() {
                 min="0"
                 step="0.01"
                 value={formValue.pricePerPiece}
-                onChange={(event) => setFormValue((value) => ({ ...value, pricePerPiece: event.target.value }))}
+                onChange={(event) => {
+                  setFormValue((value) => ({ ...value, pricePerPiece: event.target.value }));
+                  if (formError) setFormError("");
+                  if (submitError) setSubmitError("");
+                }}
                 required
               />
 
@@ -121,7 +198,11 @@ export default function Dashboard() {
                   <select
                     className="w-full h-11 px-3 border rounded-lg mt-2"
                     value={selectedBankId}
-                    onChange={(event) => setSelectedBankId(event.target.value)}
+                    onChange={(event) => {
+                      setSelectedBankId(event.target.value);
+                      if (formError) setFormError("");
+                      if (submitError) setSubmitError("");
+                    }}
                     required
                   >
                     {
@@ -133,6 +214,14 @@ export default function Dashboard() {
                 ) : (
                   <p className="text-xs text-danger mt-3">Add an account first before creating a transaction.</p>
                 )
+              }
+
+              {
+                formError && <p className="text-danger text-xs mt-2">{formError}</p>
+              }
+
+              {
+                submitError && <p className="text-danger text-xs mt-2">{submitError}</p>
               }
 
               <button
