@@ -11,12 +11,18 @@ import Reports from "./pages/reports/Reports"
 import Profile from "./pages/profile/Profile"
 import InvalidPage from "./pages/invalid page/InvalidPage"
 
+const AuthLoadingScreen = () => (
+  <div className="min-h-screen centerXY p-4">
+    <p className="text-muted">Loading your account...</p>
+  </div>
+)
+
 function App() {
 
   const PublicRoute = () => {
     const { user, isAuthLoading } = useAuth();
 
-    if (isAuthLoading) return null;
+    if (isAuthLoading) return <AuthLoadingScreen />;
 
     return user ? <Navigate to="/dashboard" replace /> : <Outlet />
   }
@@ -24,22 +30,24 @@ function App() {
   const ProtectedRoute = () => {
     const { user, isAuthLoading } = useAuth();
 
-    if (isAuthLoading) return null;
+    if (isAuthLoading) return <AuthLoadingScreen />;
 
     return user ? <Outlet /> : <Navigate to="/" replace />
   }
 
   return (
     <>
-      <BrowserRouter basename="/traced">
+      <BrowserRouter basename="/traced/">
         <Routes>
           <Route element={<PublicRoute />}>
+            <Route index element={<SignIn />} />
             <Route path="/" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
           </Route>
 
           <Route element={<ProtectedRoute />}>
             <Route element={<Core />} >
+              <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/transactions" element={<Transactions />} />
               <Route path="/accounts" element={<Accounts />} />

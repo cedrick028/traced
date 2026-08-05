@@ -44,3 +44,32 @@ body {
   display: flex;
   align-items: center;
 }
+
+.page-shell {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.page-shell-fab {
+  padding-bottom: 96px;
+}
+
+@media (min-width: 640px) {
+  .page-shell {
+    padding: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .page-shell {
+    padding: 24px;
+  }
+}

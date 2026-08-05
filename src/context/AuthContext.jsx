@@ -63,9 +63,10 @@ const AuthProvider = ({ children }) => {
 
       if (error) throw error;
 
-      return data
+      return { data, error: null }
     } catch (error) {
       console.log(error)
+      return { data: null, error }
     } finally {
       setIsSignUpLoading(false)
     }
@@ -81,9 +82,10 @@ const AuthProvider = ({ children }) => {
 
       if (error) throw error;
 
-      return data
+      return { data, error: null }
     } catch (error) {
       console.log(error)
+      return { data: null, error }
     } finally {
       setIsSignInLoading(false)
     }

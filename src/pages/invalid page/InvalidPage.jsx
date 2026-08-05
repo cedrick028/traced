@@ -1,6 +1,6 @@
 export default function InvalidPage() {
   return (
-    <div>
+    <div className="page-shell">
       Invalid url...
     </div>
   )

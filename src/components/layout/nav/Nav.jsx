@@ -1,15 +1,18 @@
 /* eslint-disable react/prop-types */
 import { ChevronRight, X } from "lucide-react";
 import { navConfig } from "../../../config/navConfig";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import Button from "../../UI/button/Button";
 import useAuth from "../../../hooks/useAuth";
 
 export default function Nav({ closeNav }) {
   const { signOut, isSignOutLoading } = useAuth();
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     await signOut();
+    closeNav();
+    navigate("/", { replace: true });
   }
 
   return (
@@ -32,7 +35,12 @@ export default function Nav({ closeNav }) {
           </div>
         </div>
         
-        <Button label={ isSignOutLoading ? "Signing Out..." : "Sign Out" } variant="secondary" onClick={handleSignOut} />
+        <Button
+          label={isSignOutLoading ? "Signing Out..." : "Sign Out"}
+          variant="secondary"
+          onClick={handleSignOut}
+          loading={isSignOutLoading}
+        />
       </div>
     </div>
   )

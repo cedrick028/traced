@@ -1,9 +1,466 @@
+import { useEffect, useMemo, useState } from "react";
+import CircularProgress from "@mui/material/CircularProgress";
+import Skeleton from "@mui/material/Skeleton";
+import { FunnelX, ReceiptText, X } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import EmptyState from "../../components/UI/empty/EmptyState";
+import TransactionData from "../../components/layout/section/transaction section/TransactionData";
+import useBank from "../../hooks/useBank";
+import useTransaction from "../../hooks/useTransaction";
+import { isIncomeTransaction } from "../../utils/transactionType";
 import ChipContainer from "./ChipContainer";
 
+const getDayKey = (dateValue) => {
+  const date = new Date(dateValue);
+  return date.toISOString().slice(0, 10);
+}
+
+const getDateHeaderLabel = (dateValue) => {
+  const date = new Date(dateValue);
+  const now = new Date();
+
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const targetDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const dayDiff = Math.round((today - targetDay) / 86400000);
+
+  if (dayDiff === 0) return "Today";
+  if (dayDiff === 1) return "Yesterday";
+
+  return date.toLocaleDateString("en-PH", {
+    month: "long",
+    day: "numeric",
+    year: "numeric"
+  });
+}
+
 export default function Transactions() {
+  const { transactionList, isTransactionLoading, deleteTransaction, updateTransaction } = useTransaction();
+  const { bankList, adjustBankBalance } = useBank();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedFilter, setSelectedFilter] = useState("all");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null);
+  const [isUpdatingTransaction, setIsUpdatingTransaction] = useState(false);
+  const [editForm, setEditForm] = useState({
+    quantity: "1",
+    pricePerPiece: "",
+    amount: ""
+  });
+  const [advancedFilter, setAdvancedFilter] = useState({
+    mode: "none",
+    date: "",
+    month: "",
+    startDate: "",
+    endDate: ""
+  });
+
+  useEffect(() => {
+    const preset = searchParams.get("preset");
+
+    if (preset === "today") {
+      const today = new Date().toISOString().slice(0, 10);
+      setAdvancedFilter((currentFilter) => ({
+        ...currentFilter,
+        mode: "date",
+        date: today
+      }));
+
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("preset");
+      setSearchParams(nextParams);
+    }
+  }, [searchParams, setSearchParams]);
+
+  const isAdvancedFilterActive = advancedFilter.mode !== "none";
+
+  const filteredTransactions = useMemo(() => {
+    if (selectedFilter === "all") return transactionList;
+
+    return transactionList.filter((transaction) => {
+      const income = isIncomeTransaction(transaction);
+      return selectedFilter === "income" ? income : !income;
+    });
+  }, [selectedFilter, transactionList]);
+
+  const filteredByDateTransactions = useMemo(() => (
+    filteredTransactions.filter((transaction) => {
+      if (advancedFilter.mode === "none") return true;
+      if (!transaction?.created_at) return false;
+
+      const transactionDate = new Date(transaction.created_at);
+      const transactionDay = transactionDate.toISOString().slice(0, 10);
+      const transactionMonth = transactionDay.slice(0, 7);
+
+      if (advancedFilter.mode === "date") {
+        return transactionDay === advancedFilter.date;
+      }
+
+      if (advancedFilter.mode === "month") {
+        return transactionMonth === advancedFilter.month;
+      }
+
+      if (advancedFilter.mode === "range") {
+        if (!advancedFilter.startDate || !advancedFilter.endDate) return true;
+        return transactionDay >= advancedFilter.startDate && transactionDay <= advancedFilter.endDate;
+      }
+
+      return true;
+    })
+  ), [filteredTransactions, advancedFilter]);
+
+  const groupedTransactions = useMemo(() => {
+    const groups = [];
+    const groupMap = new Map();
+
+    filteredByDateTransactions.forEach((transaction) => {
+      const dayKey = transaction?.created_at ? getDayKey(transaction.created_at) : "unknown";
+      const dayLabel = transaction?.created_at ? getDateHeaderLabel(transaction.created_at) : "No date";
+      const existingGroup = groupMap.get(dayKey);
+
+      if (existingGroup) {
+        existingGroup.items.push(transaction);
+      } else {
+        const group = {
+          key: dayKey,
+          label: dayLabel,
+          items: [transaction]
+        };
+
+        groups.push(group);
+        groupMap.set(dayKey, group);
+      }
+    });
+
+    return groups;
+  }, [filteredByDateTransactions]);
+
+  const clearAdvancedFilter = () => {
+    setAdvancedFilter({
+      mode: "none",
+      date: "",
+      month: "",
+      startDate: "",
+      endDate: ""
+    });
+  }
+
+  const openEditModal = (transaction) => {
+    const isIncome = isIncomeTransaction(transaction);
+    const currentQuantity = Number(transaction.quantity || 1);
+    const currentAmount = Number(transaction.price || 0);
+    const currentPricePerPiece = Number(
+      transaction.price_per_piece
+      || (currentQuantity > 0 ? currentAmount / currentQuantity : currentAmount)
+    );
+
+    setEditingTransaction(transaction);
+    setEditForm({
+      quantity: String(Math.max(1, currentQuantity)),
+      pricePerPiece: String(Math.max(0, currentPricePerPiece)),
+      amount: String(Math.max(0, currentAmount))
+    });
+
+    if (isIncome) {
+      setEditForm((currentForm) => ({
+        ...currentForm,
+        quantity: "1"
+      }));
+    }
+  }
+
+  const closeEditModal = () => {
+    setEditingTransaction(null);
+    setEditForm({ quantity: "1", pricePerPiece: "", amount: "" });
+  }
+
+  const handleUpdateTransaction = async (event) => {
+    event.preventDefault();
+    if (!editingTransaction || isUpdatingTransaction) return;
+
+    const wasIncome = isIncomeTransaction(editingTransaction);
+    const oldAmount = Number(editingTransaction.price || 0);
+
+    let nextAmount = 0;
+    let updateFields = {};
+
+    if (wasIncome) {
+      const normalizedAmount = Math.max(0, Number(editForm.amount || 0));
+      nextAmount = normalizedAmount;
+      updateFields = {
+        quantity: 1,
+        price_per_piece: normalizedAmount,
+        price: normalizedAmount
+      };
+    } else {
+      const normalizedQuantity = Math.max(1, Number(editForm.quantity || 1));
+      const normalizedPricePerPiece = Math.max(0, Number(editForm.pricePerPiece || 0));
+      nextAmount = normalizedQuantity * normalizedPricePerPiece;
+      updateFields = {
+        quantity: normalizedQuantity,
+        price_per_piece: normalizedPricePerPiece,
+        price: nextAmount
+      };
+    }
+
+    setIsUpdatingTransaction(true);
+
+    const { error: updateError } = await updateTransaction(editingTransaction.id, updateFields);
+
+    if (!updateError) {
+      const deltaAmount = nextAmount - oldAmount;
+
+      const fallbackBank = bankList.find((bank) => (
+        String(bank.bank_name ?? "").toLowerCase() === String(editingTransaction.bank ?? "").toLowerCase()
+      ));
+      const bankId = editingTransaction.bank_id ?? fallbackBank?.id;
+
+      if (bankId && deltaAmount !== 0) {
+        const adjustmentDelta = wasIncome ? deltaAmount : -deltaAmount;
+        await adjustBankBalance(bankId, adjustmentDelta);
+      }
+
+      closeEditModal();
+    }
+
+    setIsUpdatingTransaction(false);
+  }
+
   return (
-    <div className="p-4">
-      <ChipContainer />
+    <div className="page-shell page-stack">
+      <ChipContainer
+        selectedFilter={selectedFilter}
+        onChange={setSelectedFilter}
+        onOpenFilter={() => setIsFilterOpen(true)}
+        isAdvancedFilterActive={isAdvancedFilterActive}
+      />
+
+      {
+        isFilterOpen && (
+          <div className="fixed inset-0 z-50 bg-primary/35 backdrop-blur-sm p-4 centerXY">
+            <div className="w-full max-w-md bg-white border rounded-xl p-4">
+              <div className="centerX justify-between">
+                <p className="font-bold">Custom filter</p>
+                <button type="button" onClick={() => setIsFilterOpen(false)}>
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="mt-3">
+                <p className="text-xs text-muted">Filter type</p>
+                <select
+                  className="w-full h-11 px-3 border rounded-lg mt-1"
+                  value={advancedFilter.mode}
+                  onChange={(event) => setAdvancedFilter((currentFilter) => ({ ...currentFilter, mode: event.target.value }))}
+                >
+                  <option value="none">None</option>
+                  <option value="date">Specific date</option>
+                  <option value="month">Specific month</option>
+                  <option value="range">Date range</option>
+                </select>
+              </div>
+
+              {
+                advancedFilter.mode === "date" && (
+                  <input
+                    type="date"
+                    className="w-full h-11 px-3 border rounded-lg mt-3"
+                    value={advancedFilter.date}
+                    onChange={(event) => setAdvancedFilter((currentFilter) => ({ ...currentFilter, date: event.target.value }))}
+                  />
+                )
+              }
+
+              {
+                advancedFilter.mode === "month" && (
+                  <input
+                    type="month"
+                    className="w-full h-11 px-3 border rounded-lg mt-3"
+                    value={advancedFilter.month}
+                    onChange={(event) => setAdvancedFilter((currentFilter) => ({ ...currentFilter, month: event.target.value }))}
+                  />
+                )
+              }
+
+              {
+                advancedFilter.mode === "range" && (
+                  <div className="grid grid-cols-2 gap-2 mt-3">
+                    <input
+                      type="date"
+                      className="w-full h-11 px-3 border rounded-lg"
+                      value={advancedFilter.startDate}
+                      onChange={(event) => setAdvancedFilter((currentFilter) => ({ ...currentFilter, startDate: event.target.value }))}
+                    />
+                    <input
+                      type="date"
+                      className="w-full h-11 px-3 border rounded-lg"
+                      value={advancedFilter.endDate}
+                      onChange={(event) => setAdvancedFilter((currentFilter) => ({ ...currentFilter, endDate: event.target.value }))}
+                    />
+                  </div>
+                )
+              }
+
+              <button
+                type="button"
+                className="w-full h-11 border rounded-lg mt-3"
+                onClick={clearAdvancedFilter}
+              >
+                Clear filter
+              </button>
+
+              <button
+                type="button"
+                className="w-full h-11 text-white bg-primary rounded-lg mt-2"
+                onClick={() => setIsFilterOpen(false)}
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        )
+      }
+
+      {
+        editingTransaction && (
+          <div className="fixed inset-0 z-50 bg-primary/35 backdrop-blur-sm p-4 centerXY">
+            <form className="w-full max-w-md bg-white border rounded-xl p-4" onSubmit={handleUpdateTransaction}>
+              <div className="centerX justify-between">
+                <p className="font-bold">Update transaction</p>
+                <button type="button" onClick={closeEditModal}>
+                  <X size={18} />
+                </button>
+              </div>
+
+              {
+                isIncomeTransaction(editingTransaction) ? (
+                  <div className="mt-3">
+                    <p className="text-xs text-muted">Amount</p>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      className="w-full h-11 px-3 border rounded-lg mt-1"
+                      value={editForm.amount}
+                      onChange={(event) => setEditForm((currentForm) => ({ ...currentForm, amount: event.target.value }))}
+                      required
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div className="mt-3">
+                      <p className="text-xs text-muted">Quantity</p>
+                      <input
+                        type="number"
+                        min="1"
+                        className="w-full h-11 px-3 border rounded-lg mt-1"
+                        value={editForm.quantity}
+                        onChange={(event) => setEditForm((currentForm) => ({ ...currentForm, quantity: event.target.value }))}
+                        required
+                      />
+                    </div>
+
+                    <div className="mt-2">
+                      <p className="text-xs text-muted">Price per piece</p>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        className="w-full h-11 px-3 border rounded-lg mt-1"
+                        value={editForm.pricePerPiece}
+                        onChange={(event) => setEditForm((currentForm) => ({ ...currentForm, pricePerPiece: event.target.value }))}
+                        required
+                      />
+                    </div>
+                  </>
+                )
+              }
+
+              <button
+                type="submit"
+                className="w-full h-11 mt-3 rounded-lg text-white bg-primary disabled:opacity-60"
+                disabled={isUpdatingTransaction}
+              >
+                {
+                  isUpdatingTransaction ? (
+                    <span className="centerXY">
+                      <CircularProgress size={18} sx={{ color: "#FFFFFF" }} />
+                    </span>
+                  ) : (
+                    "Save changes"
+                  )
+                }
+              </button>
+            </form>
+          </div>
+        )
+      }
+
+      {
+        isTransactionLoading ? (
+          <div className="mt-4 flex flex-col gap-3">
+            {
+              Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="border rounded-xl overflow-hidden">
+                  <div className="px-4 py-2 border-b bg-surface">
+                    <Skeleton variant="text" width={120} height={28} />
+                  </div>
+                  <div className="p-4 centerX justify-between">
+                    <div className="centerX gap-3">
+                      <Skeleton variant="rounded" width={36} height={36} />
+                      <div>
+                        <Skeleton variant="text" width={130} height={24} />
+                        <Skeleton variant="text" width={110} height={18} />
+                      </div>
+                    </div>
+                    <div>
+                      <Skeleton variant="text" width={90} height={24} />
+                      <Skeleton variant="text" width={60} height={18} />
+                    </div>
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+        ) : groupedTransactions.length === 0 ? (
+          <div className="mt-4">
+            <EmptyState
+              icon={selectedFilter === "all" ? ReceiptText : FunnelX}
+              title={selectedFilter === "all" ? "No transactions yet" : `No ${selectedFilter} transactions`}
+              description={(selectedFilter === "all" && !isAdvancedFilterActive)
+                ? "Create your first transaction from the dashboard to get started."
+                : "Try another filter or add a new transaction."
+              }
+            />
+          </div>
+        ) : (
+          <div className="mt-4 flex flex-col gap-3">
+            {
+              groupedTransactions.map((group) => (
+                <div key={group.key} className="border rounded-xl overflow-hidden">
+                  <p className="px-4 py-2 font-bold bg-surface border-b">{group.label}</p>
+                  <div className="divide-y">
+                    {
+                      group.items.map((transaction) => (
+                        <TransactionData
+                          key={transaction.id}
+                          item={transaction.item}
+                          price={transaction.price}
+                          bank={transaction.bank}
+                          category={transaction.category}
+                          type={transaction.type}
+                          createdAt={transaction.created_at}
+                          onEdit={() => openEditModal(transaction)}
+                          onDelete={() => deleteTransaction(transaction.id)}
+                        />
+                      ))
+                    }
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+        )
+      }
     </div>
   )
 }

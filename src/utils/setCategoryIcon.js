@@ -1,4 +1,4 @@
-import { Box, Car, Droplets, ShoppingBag, ShoppingCart, TicketIcon, TvMinimalPlayIcon } from "lucide-react"
+import { ArrowDownCircle, ArrowUpCircle, Box, Car, Droplets, ShoppingBag, ShoppingCart, TicketIcon, TvMinimalPlayIcon } from "lucide-react"
 
 export const setCategoryIcon = (category) => {
   switch (category.toLowerCase()) {
@@ -14,6 +14,10 @@ export const setCategoryIcon = (category) => {
       return TvMinimalPlayIcon
     case "entertainment" :
       return TicketIcon
+    case "income" :
+      return ArrowUpCircle
+    case "expense" :
+      return ArrowDownCircle
     default :
       return Box
   }

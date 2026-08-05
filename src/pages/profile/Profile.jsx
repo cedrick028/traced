@@ -1,6 +1,6 @@
 export default function Profile() {
   return (
-    <div>
+    <div className="page-shell">
       Profile
     </div>
   )
