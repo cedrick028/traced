@@ -20,16 +20,9 @@ import useTransaction from "../../hooks/useTransaction";
 import { formatCurrency } from "../../utils/formatCurrency";
 import { isIncomeTransaction } from "../../utils/transactionType";
 
-const CHART_COLORS = [
-  "#0F172A",
-  "#2563EB",
-  "#0EA5E9",
-  "#14B8A6",
-  "#10B981",
-  "#F59E0B",
-  "#F97316",
-  "#EF4444"
-];
+const CHART_COLORS = ["#2B2D31", "#4B4F56", "#6B717A", "#8B929E", "#A7AFBC", "#C5CBD5"];
+const INCOME_COLOR = "#2B2D31";
+const EXPENSE_COLOR = "#8B929E";
 
 const toDate = (value) => {
   const date = new Date(value);
@@ -144,20 +137,22 @@ export default function Reports() {
       .sort((a, b) => b.value - a.value);
   }, [selectedMonthTransactions]);
 
+  const totalCategorySpend = useMemo(() => (
+    categoryPieData.reduce((sum, item) => sum + item.value, 0)
+  ), [categoryPieData]);
+
+  const categoryLegendData = useMemo(() => (
+    categoryPieData.map((item) => ({
+      ...item,
+      percent: totalCategorySpend > 0 ? (item.value / totalCategorySpend) * 100 : 0
+    }))
+  ), [categoryPieData, totalCategorySpend]);
+
   const monthlyCompareData = useMemo(() => ([{
     name: format(selectedMonth, "MMM yyyy"),
     Income: reportSummary.income,
     Expense: reportSummary.expense
   }]), [reportSummary.expense, reportSummary.income, selectedMonth]);
-
-  const topCategoriesData = useMemo(() => (
-    categoryPieData
-      .slice(0, 6)
-      .map((category) => ({
-        ...category,
-        shortName: category.name.length > 12 ? `${category.name.slice(0, 12)}...` : category.name
-      }))
-  ), [categoryPieData]);
 
   return (
     <div className="page-shell page-stack">
@@ -187,31 +182,45 @@ export default function Reports() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="p-4 border rounded-xl bg-white">
-          <p className="text-xs text-muted">Income</p>
-          <p className="text-base font-bold mt-1">{formatCurrency(reportSummary.income)}</p>
-          <p className="text-xs text-muted mt-1">{reportSummary.incomeCount} transactions</p>
-        </div>
-
-        <div className="p-4 border rounded-xl bg-white">
-          <p className="text-xs text-muted">Expense</p>
-          <p className="text-base font-bold mt-1">{formatCurrency(reportSummary.expense)}</p>
-          <p className="text-xs text-muted mt-1">{reportSummary.expenseCount} transactions</p>
-        </div>
-
-        <div className="p-4 border rounded-xl bg-white">
-          <p className="text-xs text-muted">Net Cash Flow</p>
-          <p className={`text-base font-bold mt-1 ${netAmount >= 0 ? "text-green-700" : "text-red-700"}`}>
-            {formatCurrency(netAmount)}
+      <div className="p-5 rounded-xl bg-white">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted">Monthly Snapshot</p>
+            <p className="text-sm text-slate-700 mt-1">Overview for {format(selectedMonth, "MMMM yyyy")}</p>
+          </div>
+          <p className={`text-sm font-semibold ${netAmount >= 0 ? "text-green-700" : "text-red-700"}`}>
+            Net: {formatCurrency(netAmount)}
           </p>
-          <p className="text-xs text-muted mt-1">Income minus expense</p>
         </div>
 
-        <div className="p-4 border rounded-xl bg-white">
-          <p className="text-xs text-muted">Total Movements</p>
-          <p className="text-base font-bold mt-1">{reportSummary.incomeCount + reportSummary.expenseCount}</p>
-          <p className="text-xs text-muted mt-1">All transactions in month</p>
+        <div className="mt-4 rounded-lg bg-slate-50/60 px-4 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <div className="md:pr-4">
+              <p className="text-xs text-muted">Income</p>
+              <p className="text-2xl font-bold text-slate-900 mt-1">{formatCurrency(reportSummary.income)}</p>
+              <p className="text-xs text-slate-500 mt-1">{reportSummary.incomeCount} transactions</p>
+            </div>
+
+            <div>
+              <p className="text-xs text-muted">Expense</p>
+              <p className="text-2xl font-bold text-slate-900 mt-1">{formatCurrency(reportSummary.expense)}</p>
+              <p className="text-xs text-slate-500 mt-1">{reportSummary.expenseCount} transactions</p>
+            </div>
+          </div>
+
+          <div className="mt-4 pt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-slate-600">Net Cash Flow</p>
+              <p className={`text-base font-semibold ${netAmount >= 0 ? "text-green-700" : "text-red-700"}`}>
+                {formatCurrency(netAmount)}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between sm:pl-3">
+              <p className="text-sm text-slate-600">Total Movements</p>
+              <p className="text-base font-semibold text-slate-900">{reportSummary.incomeCount + reportSummary.expenseCount}</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -226,7 +235,7 @@ export default function Reports() {
           </div>
         ) : (
           <>
-            <div className="p-4 border rounded-xl bg-white">
+            <div className="p-4 rounded-xl bg-white">
               <p className="font-semibold mb-3">Daily Trend</p>
               <div className="w-full h-[260px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -236,63 +245,60 @@ export default function Reports() {
                     <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `${Math.round(value / 1000)}k`} />
                     <Tooltip formatter={(value) => formatCurrency(value)} />
                     <Legend />
-                    <Line type="monotone" dataKey="income" stroke="#10B981" strokeWidth={2} dot={false} name="Income" />
-                    <Line type="monotone" dataKey="expense" stroke="#EF4444" strokeWidth={2} dot={false} name="Expense" />
+                    <Line type="monotone" dataKey="income" stroke={INCOME_COLOR} strokeWidth={2} dot={false} name="Income" />
+                    <Line type="monotone" dataKey="expense" stroke={EXPENSE_COLOR} strokeWidth={2} dot={false} name="Expense" />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-              <div className="p-4 border rounded-xl bg-white">
-                <p className="font-semibold mb-3">Category Spend Split</p>
-                <div className="w-full h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={categoryPieData}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={96}
-                        label={({ name, percent }) => `${name} (${Math.round(percent * 100)}%)`}
-                      >
-                        {
-                          categoryPieData.map((entry, index) => (
-                            <Cell key={entry.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                          ))
-                        }
-                      </Pie>
-                      <Tooltip formatter={(value) => formatCurrency(value)} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
+            <div className="p-4 rounded-xl bg-white">
+              <p className="font-semibold mb-3">Spending by Category</p>
+              <div className="w-full h-[260px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryPieData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      startAngle={90}
+                      endAngle={-270}
+                      innerRadius={56}
+                      outerRadius={88}
+                      paddingAngle={2}
+                      stroke="none"
+                    >
+                      {
+                        categoryPieData.map((entry, index) => (
+                          <Cell key={entry.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                        ))
+                      }
+                    </Pie>
+                    <Tooltip formatter={(value) => formatCurrency(value)} />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
 
-              <div className="p-4 border rounded-xl bg-white">
-                <p className="font-semibold mb-3">Top Expense Categories</p>
-                <div className="w-full h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={topCategoriesData} layout="vertical" margin={{ top: 4, right: 8, left: 8, bottom: 4 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                      <XAxis type="number" tick={{ fontSize: 12 }} tickFormatter={(value) => `${Math.round(value / 1000)}k`} />
-                      <YAxis type="category" dataKey="shortName" tick={{ fontSize: 12 }} width={92} />
-                      <Tooltip formatter={(value) => formatCurrency(value)} />
-                      <Bar dataKey="value" radius={[0, 8, 8, 0]}>
-                        {
-                          topCategoriesData.map((category, index) => (
-                            <Cell key={category.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                          ))
-                        }
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+              <div className="mt-2 space-y-2">
+                {
+                  categoryLegendData.map((item, index) => (
+                    <div key={item.name} className="grid grid-cols-[14px_1fr_56px_auto] items-center gap-2 text-sm">
+                      <span
+                        className="inline-block w-2.5 h-2.5 rounded-full"
+                        style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
+                      />
+                      <p className="text-slate-700">{item.name}</p>
+                      <p className="text-slate-600 text-right">{Math.round(item.percent)}%</p>
+                      <p className="font-medium text-slate-800 text-right min-w-[88px]">{formatCurrency(item.value)}</p>
+                    </div>
+                  ))
+                }
               </div>
             </div>
 
-            <div className="p-4 border rounded-xl bg-white">
+            <div className="p-4 rounded-xl bg-white">
               <p className="font-semibold mb-3">Income vs Expense</p>
               <div className="w-full h-[240px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -302,8 +308,8 @@ export default function Reports() {
                     <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `${Math.round(value / 1000)}k`} />
                     <Tooltip formatter={(value) => formatCurrency(value)} />
                     <Legend />
-                    <Bar dataKey="Income" fill="#10B981" radius={[8, 8, 0, 0]} />
-                    <Bar dataKey="Expense" fill="#EF4444" radius={[8, 8, 0, 0]} />
+                    <Bar dataKey="Income" fill={INCOME_COLOR} radius={[8, 8, 0, 0]} />
+                    <Bar dataKey="Expense" fill={EXPENSE_COLOR} radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
