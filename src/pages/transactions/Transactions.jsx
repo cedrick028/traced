@@ -24,7 +24,14 @@ const TRANSACTION_CATEGORIES = [
 
 const getDayKey = (dateValue) => {
   const date = new Date(dateValue);
-  return date.toISOString().slice(0, 10);
+
+  if (Number.isNaN(date.getTime())) return "unknown";
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }
 
 const getDateHeaderLabel = (dateValue) => {
@@ -38,10 +45,12 @@ const getDateHeaderLabel = (dateValue) => {
   if (dayDiff === 0) return "Today";
   if (dayDiff === 1) return "Yesterday";
 
+  const isCurrentYear = date.getFullYear() === now.getFullYear();
+
   return date.toLocaleDateString("en-PH", {
     month: "long",
     day: "numeric",
-    year: "numeric"
+    ...(isCurrentYear ? {} : { year: "numeric" })
   });
 }
 
@@ -52,6 +61,8 @@ export default function Transactions() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [isUpdatingTransaction, setIsUpdatingTransaction] = useState(false);
+  const [deletingTransactionId, setDeletingTransactionId] = useState(null);
+  const [isDeletingTransaction, setIsDeletingTransaction] = useState(false);
   const [filterError, setFilterError] = useState("");
   const [editError, setEditError] = useState("");
   const [editForm, setEditForm] = useState({
@@ -101,8 +112,7 @@ export default function Transactions() {
       if (advancedFilter.mode === "none") return true;
       if (!transaction?.created_at) return false;
 
-      const transactionDate = new Date(transaction.created_at);
-      const transactionDay = transactionDate.toISOString().slice(0, 10);
+      const transactionDay = getDayKey(transaction.created_at);
       const transactionMonth = transactionDay.slice(0, 7);
 
       if (advancedFilter.mode === "date") {
@@ -123,10 +133,16 @@ export default function Transactions() {
   ), [filteredTransactions, advancedFilter]);
 
   const groupedTransactions = useMemo(() => {
+    const sortedTransactions = [...filteredByDateTransactions].sort((transactionA, transactionB) => {
+      const dateA = new Date(transactionA?.created_at ?? 0).getTime();
+      const dateB = new Date(transactionB?.created_at ?? 0).getTime();
+      return dateB - dateA;
+    });
+
     const groups = [];
     const groupMap = new Map();
 
-    filteredByDateTransactions.forEach((transaction) => {
+    sortedTransactions.forEach((transaction) => {
       const dayKey = transaction?.created_at ? getDayKey(transaction.created_at) : "unknown";
       const dayLabel = transaction?.created_at ? getDateHeaderLabel(transaction.created_at) : "No date";
       const existingGroup = groupMap.get(dayKey);
@@ -217,6 +233,24 @@ export default function Transactions() {
     setEditingTransaction(null);
     setEditForm({ category: "Others", quantity: "1", pricePerPiece: "", amount: "" });
     setEditError("");
+  }
+
+  const openDeleteTransactionModal = (transactionId) => {
+    setDeletingTransactionId(transactionId);
+  }
+
+  const closeDeleteTransactionModal = () => {
+    if (isDeletingTransaction) return;
+    setDeletingTransactionId(null);
+  }
+
+  const handleDeleteTransaction = async () => {
+    if (!deletingTransactionId || isDeletingTransaction) return;
+
+    setIsDeletingTransaction(true);
+    await deleteTransaction(deletingTransactionId);
+    setIsDeletingTransaction(false);
+    setDeletingTransactionId(null);
   }
 
   const handleUpdateTransaction = async (event) => {
@@ -404,6 +438,50 @@ export default function Transactions() {
       }
 
       {
+        deletingTransactionId && (
+          <div className="fixed inset-0 z-50 bg-primary/35 backdrop-blur-sm p-4 centerXY">
+            <div className="w-full max-w-md bg-white border rounded-xl p-4">
+              <div className="centerX justify-between">
+                <p className="font-bold">Delete transaction</p>
+                <button type="button" onClick={closeDeleteTransactionModal} disabled={isDeletingTransaction}>
+                  <X size={18} />
+                </button>
+              </div>
+
+              <p className="text-sm text-muted mt-3">Are you sure you want to delete this transaction? This action cannot be undone.</p>
+
+              <div className="grid grid-cols-2 gap-2 mt-4">
+                <button
+                  type="button"
+                  className="h-11 border rounded-lg"
+                  onClick={closeDeleteTransactionModal}
+                  disabled={isDeletingTransaction}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="h-11 rounded-lg bg-danger text-white disabled:opacity-60"
+                  onClick={handleDeleteTransaction}
+                  disabled={isDeletingTransaction}
+                >
+                  {
+                    isDeletingTransaction ? (
+                      <span className="centerXY">
+                        <CircularProgress size={18} sx={{ color: "#FFFFFF" }} />
+                      </span>
+                    ) : (
+                      "Delete"
+                    )
+                  }
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {
         editingTransaction && (
           <div className="fixed inset-0 z-50 bg-primary/35 backdrop-blur-sm p-4 centerXY">
             <form className="w-full max-w-md bg-white border rounded-xl p-4" onSubmit={handleUpdateTransaction}>
@@ -565,7 +643,7 @@ export default function Transactions() {
                           type={transaction.type}
                           createdAt={transaction.created_at}
                           onEdit={() => openEditModal(transaction)}
-                          onDelete={() => deleteTransaction(transaction.id)}
+                          onDelete={() => openDeleteTransactionModal(transaction.id)}
                         />
                       ))
                     }

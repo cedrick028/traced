@@ -1,12 +1,19 @@
 import ProgressBar from "../../components/UI/progress bar/ProgressBar";
+import { useNavigate } from "react-router-dom";
 import useBudget from "../../hooks/useBudget";
 import { formatCurrency } from "../../utils/formatCurrency";
 
 export default function BudgetBreakdown() {
+  const navigate = useNavigate();
   const { monthlyBudget, spentThisMonth, budgetLeft, savedAmount, budgetStatus } = useBudget();
   const progressValue = monthlyBudget > 0
-    ? Math.min(100, Math.round((spentThisMonth / monthlyBudget) * 100))
+    ? Math.min(100, (spentThisMonth / monthlyBudget) * 100)
     : 0;
+  const statusNavigation = {
+    setup: "/accounts",
+    no_budget: "/budget"
+  };
+  const statusRedirectPath = statusNavigation[budgetStatus.key] ?? null;
 
   return (
     <div className="border rounded-xl bg-surface overflow-hidden">
@@ -14,9 +21,21 @@ export default function BudgetBreakdown() {
         <p>Budget left</p>
         <div className="flex items-end justify-between">
           <p className="text-3xl mt-2 leading-none">{formatCurrency(budgetLeft)}</p>
-          <div className={`px-3 py-1 border rounded-lg ${budgetStatus.bgClass} ${budgetStatus.borderClass}`}>
-            <p className={budgetStatus.textClass}>{budgetStatus.label}</p>
-          </div>
+          {
+            statusRedirectPath ? (
+              <button
+                type="button"
+                className={`px-3 py-1 border rounded-lg ${budgetStatus.bgClass} ${budgetStatus.borderClass}`}
+                onClick={() => navigate(statusRedirectPath)}
+              >
+                <p className={budgetStatus.textClass}>{budgetStatus.label}</p>
+              </button>
+            ) : (
+              <div className={`px-3 py-1 border rounded-lg ${budgetStatus.bgClass} ${budgetStatus.borderClass}`}>
+                <p className={budgetStatus.textClass}>{budgetStatus.label}</p>
+              </div>
+            )
+          }
         </div>
       </div>
 

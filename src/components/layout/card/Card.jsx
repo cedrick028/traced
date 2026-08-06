@@ -1,5 +1,6 @@
-import { Ellipsis, Eye, Plus, User, X } from "lucide-react";
+import { Ellipsis, Eye, EyeOff, Plus, User, X } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import CircularProgress from "@mui/material/CircularProgress";
 import Icon from "../../UI/icon/Icon";
 import useAuth from "../../../hooks/useAuth";
@@ -10,13 +11,14 @@ import { getTotalBalance } from "../../../utils/bankBalance";
 import { formatCurrency } from "../../../utils/formatCurrency";
 
 export default function Card() {
+  const navigate = useNavigate();
   const { displayName } = useAuth();
   const { bankList } = useBank();
   const { addIncomeTransaction, transactionList } = useTransaction();
 
   const [isAddMoneyOpen, setIsAddMoneyOpen] = useState(false);
   const [showAccountPicker, setShowAccountPicker] = useState(false);
-  const [isBalanceVisible, setIsBalanceVisible] = useState(true);
+  const [isBalanceVisible, setIsBalanceVisible] = useState(false);
   const [amount, setAmount] = useState("");
   const [selectedBankId, setSelectedBankId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -87,14 +89,20 @@ export default function Card() {
             <Icon icon={User} variant="light" />
             <p className="text-base font-bold text-white tracking-wide">{displayName}&apos;s Account</p>
           </div>
-          <Ellipsis color="white" />
+          <button type="button" className="centerXY" onClick={() => navigate("/accounts") } aria-label="Open accounts page">
+            <Ellipsis color="white" />
+          </button>
         </div>
         <div className="mt-6">
           <p className="text-xs text-white">Available balance</p>
           <div className="centerX gap-3 mt-2">
             <p className="text-4xl text-white">{isBalanceVisible ? formatCurrency(totalBalance) : "••••••"}</p>
             <button className="w-6 h-6 centerXY" type="button" onClick={() => setIsBalanceVisible((value) => !value)}>
-              <Eye size={18} color="white" />
+              {
+                isBalanceVisible
+                  ? <EyeOff size={18} color="white" />
+                  : <Eye size={18} color="white" />
+              }
             </button>
           </div>
           <div className="w-full flex justify-end mt-6">

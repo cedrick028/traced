@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import CircularProgress from "@mui/material/CircularProgress";
 import useBudget from "../../hooks/useBudget";
 import BudgetBreakdown from "./BudgetBreakdown";
 import BudgetHeader from "./BudgetHeader";
@@ -19,6 +20,7 @@ export default function Budget() {
     lowMin: String(statusLimits.lowMin)
   });
   const [isStatusFormOpen, setIsStatusFormOpen] = useState(false);
+  const [isSavingBudget, setIsSavingBudget] = useState(false);
 
   useEffect(() => () => {
     resetToCurrentMonth();
@@ -35,8 +37,12 @@ export default function Budget() {
     });
   }, [statusLimits]);
 
-  const handleSaveBudget = () => {
-    saveMonthlyBudget(budgetInput);
+  const handleSaveBudget = async () => {
+    if (isSavingBudget) return;
+
+    setIsSavingBudget(true);
+    await saveMonthlyBudget(budgetInput);
+    setIsSavingBudget(false);
   }
 
   const handleSaveStatusLimits = () => {
@@ -64,8 +70,20 @@ export default function Budget() {
             value={budgetInput}
             onChange={(event) => setBudgetInput(event.target.value)}
           />
-          <button className="h-11 px-4 rounded-lg text-white bg-primary" onClick={handleSaveBudget}>
-            Save
+          <button
+            className="h-11 px-4 rounded-lg text-white bg-primary disabled:opacity-60"
+            onClick={handleSaveBudget}
+            disabled={isSavingBudget}
+          >
+            {
+              isSavingBudget ? (
+                <span className="centerXY">
+                  <CircularProgress size={18} sx={{ color: "#FFFFFF" }} />
+                </span>
+              ) : (
+                "Save"
+              )
+            }
           </button>
         </div>
       </div>
@@ -83,12 +101,6 @@ export default function Budget() {
           >
             {isStatusFormOpen ? "Close" : "Set values"}
           </button>
-        </div>
-
-        <div className="grid grid-cols-1 gap-2 mt-3 text-xs">
-          <p className="text-green-700">On Track: {`>=`} {statusLimits.onTrackMin}</p>
-          <p className="text-orange-700">Low: {`>=`} {statusLimits.lowMin} and below {statusLimits.onTrackMin}</p>
-          <p className="text-red-700">Critical: below {statusLimits.lowMin}</p>
         </div>
 
         {

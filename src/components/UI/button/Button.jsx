@@ -6,11 +6,12 @@ export default function Button({ label, icon: Icon, variant, onClick, className,
   const buttonStyle = {
     primary: "bg-primary text-white",
     secondary: "bg-secondary",
+    danger: "bg-danger text-white border-danger",
     transparent: "bg-white border border-primary"
   }
 
   const isDisabled = disabled || loading;
-  const spinnerColor = variant?.toLowerCase() === "primary" ? "#FFFFFF" : "#141618";
+  const spinnerColor = ["primary", "danger"].includes(variant?.toLowerCase()) ? "#FFFFFF" : "#141618";
 
   return (
     <button

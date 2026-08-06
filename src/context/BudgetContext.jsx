@@ -2,6 +2,8 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from "react";
 import useAuth from "../hooks/useAuth";
 import useTransaction from "../hooks/useTransaction";
+import useBank from "../hooks/useBank";
+import { supabase } from "../service/supabase";
 import { isIncomeTransaction } from "../utils/transactionType";
 
 const BudgetContext = createContext();
@@ -20,18 +22,12 @@ const addMonth = (dateValue, amount) => {
   return new Date(date.getFullYear(), date.getMonth() + amount, 1);
 }
 
-const getDateKey = (dateValue) => {
+const getMonthStartValue = (dateValue) => {
   const date = new Date(dateValue);
-  return `${date.getFullYear()}-${date.getMonth()}`;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}-01`;
 }
-
-const getBudgetStorageKey = (userId, dateValue) => (
-  `traced-budget-${userId}-${getDateKey(dateValue)}`
-);
-
-const getStatusStorageKey = (userId) => (
-  `traced-budget-status-${userId}`
-);
 
 const normalizeAmount = (value) => {
   const parsedValue = Number(value);
@@ -41,6 +37,7 @@ const normalizeAmount = (value) => {
 const BudgetProvider = ({ children }) => {
   const { user } = useAuth();
   const { transactionList } = useTransaction();
+  const { bankList } = useBank();
   const [monthlyBudget, setMonthlyBudget] = useState(0);
   const [statusLimits, setStatusLimits] = useState(DEFAULT_STATUS_LIMITS);
   const [selectedMonth, setSelectedMonth] = useState(getMonthStart(new Date()));
@@ -54,9 +51,32 @@ const BudgetProvider = ({ children }) => {
       return;
     }
 
-    const storageKey = getBudgetStorageKey(user.id, selectedMonth);
-    const savedValue = localStorage.getItem(storageKey);
-    setMonthlyBudget(normalizeAmount(savedValue));
+    let isActive = true;
+
+    const getMonthlyBudget = async () => {
+      const { data, error } = await supabase
+        .from("budget_monthly")
+        .select("monthly_budget")
+        .eq("user_id", user.id)
+        .eq("month_start", getMonthStartValue(selectedMonth))
+        .maybeSingle();
+
+      if (!isActive) return;
+
+      if (error) {
+        console.log(error);
+        setMonthlyBudget(0);
+        return;
+      }
+
+      setMonthlyBudget(normalizeAmount(data?.monthly_budget));
+    }
+
+    getMonthlyBudget();
+
+    return () => {
+      isActive = false;
+    };
   }, [user?.id, selectedMonth]);
 
   useEffect(() => {
@@ -65,36 +85,65 @@ const BudgetProvider = ({ children }) => {
       return;
     }
 
-    const statusStorageKey = getStatusStorageKey(user.id);
-    const storedStatusLimits = localStorage.getItem(statusStorageKey);
+    let isActive = true;
 
-    if (!storedStatusLimits) {
-      setStatusLimits(DEFAULT_STATUS_LIMITS);
-      return;
-    }
+    const getStatusLimits = async () => {
+      const { data, error } = await supabase
+        .from("budget_status_limits")
+        .select("on_track_min, low_min")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-    try {
-      const parsedStatusLimits = JSON.parse(storedStatusLimits);
+      if (!isActive) return;
+
+      if (error) {
+        console.log(error);
+        setStatusLimits(DEFAULT_STATUS_LIMITS);
+        return;
+      }
+
+      if (!data) {
+        setStatusLimits(DEFAULT_STATUS_LIMITS);
+        return;
+      }
+
       setStatusLimits({
-        onTrackMin: normalizeAmount(parsedStatusLimits.onTrackMin),
-        lowMin: normalizeAmount(parsedStatusLimits.lowMin)
+        onTrackMin: normalizeAmount(data.on_track_min),
+        lowMin: normalizeAmount(data.low_min)
       });
-    } catch {
-      setStatusLimits(DEFAULT_STATUS_LIMITS);
     }
+
+    getStatusLimits();
+
+    return () => {
+      isActive = false;
+    };
   }, [user?.id]);
 
-  const saveMonthlyBudget = (value) => {
+  const saveMonthlyBudget = async (value) => {
     if (!user?.id) return;
 
     const normalizedBudget = Math.max(0, normalizeAmount(value));
-    const storageKey = getBudgetStorageKey(user.id, selectedMonth);
 
-    localStorage.setItem(storageKey, String(normalizedBudget));
     setMonthlyBudget(normalizedBudget);
+
+    const { error } = await supabase
+      .from("budget_monthly")
+      .upsert({
+        user_id: user.id,
+        month_start: getMonthStartValue(selectedMonth),
+        monthly_budget: normalizedBudget
+      }, {
+        onConflict: "user_id,month_start"
+      });
+
+    if (error) {
+      console.log(error);
+      setMonthlyBudget((currentBudget) => currentBudget);
+    }
   }
 
-  const saveStatusLimits = ({ onTrackMin, lowMin }) => {
+  const saveStatusLimits = async ({ onTrackMin, lowMin }) => {
     if (!user?.id) return;
 
     const normalizedOnTrackMin = Math.max(0, normalizeAmount(onTrackMin));
@@ -105,8 +154,21 @@ const BudgetProvider = ({ children }) => {
       lowMin: normalizedLowMin
     };
 
-    localStorage.setItem(getStatusStorageKey(user.id), JSON.stringify(nextStatusLimits));
     setStatusLimits(nextStatusLimits);
+
+    const { error } = await supabase
+      .from("budget_status_limits")
+      .upsert({
+        user_id: user.id,
+        on_track_min: normalizedOnTrackMin,
+        low_min: normalizedLowMin
+      }, {
+        onConflict: "user_id"
+      });
+
+    if (error) {
+      console.log(error);
+    }
   }
 
   const goToPreviousMonth = useCallback(() => {
@@ -139,8 +201,31 @@ const BudgetProvider = ({ children }) => {
 
   const budgetLeft = Math.max(0, monthlyBudget - spentThisMonth);
   const savedAmount = Math.max(0, budgetLeft);
+  const hasNoAccounts = bankList.length === 0;
+  const hasNoTransactions = transactionList.length === 0;
+  const isBudgetUnset = monthlyBudget <= 0;
 
   const budgetStatus = useMemo(() => {
+    if (hasNoAccounts && hasNoTransactions && isBudgetUnset) {
+      return {
+        key: "setup",
+        label: "Set up profile",
+        textClass: "text-slate-700",
+        bgClass: "bg-slate-50",
+        borderClass: "border-slate-200"
+      };
+    }
+
+    if (isBudgetUnset) {
+      return {
+        key: "no_budget",
+        label: "Set budget",
+        textClass: "text-blue-700",
+        bgClass: "bg-blue-50",
+        borderClass: "border-blue-200"
+      };
+    }
+
     if (budgetLeft >= statusLimits.onTrackMin) {
       return {
         key: "on_track",
@@ -168,7 +253,7 @@ const BudgetProvider = ({ children }) => {
       bgClass: "bg-red-50",
       borderClass: "border-red-200"
     };
-  }, [budgetLeft, statusLimits.lowMin, statusLimits.onTrackMin]);
+  }, [budgetLeft, hasNoAccounts, hasNoTransactions, isBudgetUnset, statusLimits.lowMin, statusLimits.onTrackMin]);
 
   const categoryBreakdown = useMemo(() => {
     const breakdownMap = new Map();

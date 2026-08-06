@@ -16,7 +16,7 @@ export default function Nav({ closeNav }) {
   }
 
   return (
-    <div className="inset-0 fixed bg-gray-200/50 backdrop-blur-[2px]" onClick={closeNav}>
+    <div className="inset-0 fixed z-[60] bg-gray-200/50 backdrop-blur-[2px]" onClick={closeNav}>
       <div className="w-8/12 h-screen flex flex-col justify-between bg-white p-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex flex-col gap-6">
           <X onClick={closeNav} />
@@ -37,7 +37,7 @@ export default function Nav({ closeNav }) {
         
         <Button
           label={isSignOutLoading ? "Signing Out..." : "Sign Out"}
-          variant="secondary"
+          variant="danger"
           onClick={handleSignOut}
           loading={isSignOutLoading}
         />
